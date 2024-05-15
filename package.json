@@ -1,0 +1,57 @@
+{
+  "name": "@clinicaltoolkits/variables",
+  "version": "1.0.82",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "start": "webpack serve --open --config webpack.config.js",
+    "build": "tsc && copyfiles -u 1 src/**/*.css dist/",
+    "prepublishOnly": "npm run build && npm version patch --no-git-tag-version",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ClinicalToolkits/variables.git"
+  },
+  "keywords": [],
+  "author": "Clinical Toolkits",
+  "license": "ISC",
+  "devDependencies": {
+    "@svgr/webpack": "^8.1.0",
+    "@tabler/icons-react": "^3.3.0",
+    "@types/react": "^18.2.46",
+    "@types/react-dom": "^18.2.18",
+    "browserify": "^17.0.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "copyfiles": "^2.4.1",
+    "css-loader": "^6.8.1",
+    "dotenv": "^16.4.1",
+    "file-loader": "^6.2.0",
+    "html-webpack-plugin": "^5.6.0",
+    "path-browserify": "^1.0.1",
+    "postcss": "^8.4.32",
+    "postcss-loader": "^7.3.4",
+    "postcss-preset-mantine": "^1.12.3",
+    "raw-loader": "^4.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.21.1",
+    "style-loader": "^3.3.3",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "url-loader": "^4.1.1",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
+  },
+  "dependencies": {
+    "@clinicaltoolkits/type-definitions": "^1.0.165",
+    "@clinicaltoolkits/universal-react-components": "^1.0.811",
+    "@clinicaltoolkits/utility-functions": "^1.0.29"
+  },
+  "peerDependencies": {
+    "@mantine/core": "^7.9.0",
+    "@mantine/hooks": "^7.9.0"
+  }
+}

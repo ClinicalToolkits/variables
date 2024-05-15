@@ -1,0 +1,80 @@
+.optionalVariablesCheckbox {
+  padding-top: rem(8px);
+}
+
+.infoFieldComponentGroup {
+
+}
+
+.infoFieldComponentGroup {
+
+}
+
+.infoFieldLabelText {
+  font-family: var(--CT-font-family-default);
+}
+
+.infoFieldLabelFlex {
+}
+
+.infoFieldInputElement {
+  font-family: var(--CT-font-family-default);
+}
+
+.input {
+  text-align: left;
+}
+/* input elements */
+.inputCenter {
+  text-align: center;
+}
+
+.calendarHeader {
+  color: red !important;
+}
+
+.headingRoot {
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+}
+
+.headingText {
+  text-align: left !important;
+  width: 100%;
+}
+
+
+
+.componentGroup {
+  justify-content: flex-start;
+  width: 100%;
+  flex-wrap: nowrap;
+}
+
+.root {
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  border-bottom: 1px dashed var(--CT-colors-border);
+  padding: rem(5px);
+  flex-wrap: nowrap;
+}
+
+.stack {
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.labelFlex {
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.labelText {
+  font-size: var(--mantine-font-size-sm);
+  padding-top: 1px;
+  padding-bottom: 1px;
+}

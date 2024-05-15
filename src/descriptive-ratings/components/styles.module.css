@@ -1,0 +1,25 @@
+.stackBackground {
+  background-color: var(--CT-colors-paper-background);
+}
+
+.inputFieldPaper {
+  border: 0px;
+  background-color: transparent;
+}
+
+.inputFieldLabelFlex {
+  min-width: 150px;
+  flex-wrap: wrap;
+}
+
+/* Input field with label */
+@media (max-width: rem(400px)) {
+  .inputFieldRoot {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .infoFieldComponentGroup {
+    flex-wrap: wrap;
+    gap: var(--mantine-spacing-xxs);
+  }
+}

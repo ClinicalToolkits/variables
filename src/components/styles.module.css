@@ -1,0 +1,104 @@
+.statusBadge {
+  --badge-bg: var(--badge-color, var(--CT-colors-primary));
+  --badge-radius: var(--CT-radius-default);
+  font-weight: 500;
+  width: 100%;
+}
+
+.roleBadge {
+  --badge-bg: var(--badge-color, var(--CT-colors-gray-4));
+  --badge-radius: var(--CT-radius-default);
+  font-weight: 500;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  background-color: var(--mantine-color-body);
+  transition: box-shadow 150ms ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-bottom: rem(1px) solid var(--CT-colors-border)
+  }
+}
+
+.scrolled {
+  box-shadow: var(--mantine-shadow-sm);
+}
+
+.th {
+  cursor: pointer;
+}
+
+.searchBar {
+  position: sticky;
+  top: 0; /* Adjust this value based on your needs */
+  z-index: 1; /* Ensure the search bar is above other content when scrolling */
+  background-color: transparent; /* Match the background to your design */
+  padding: 10px 0; /* Optional: Adds some spacing around the search bar */
+}
+
+/* Have button on hover background overflow into adjacent columns by 20px */
+.button {
+  overflow: visible;
+  margin: -5px;
+  padding: 5px;
+}
+
+
+
+
+
+
+.modalContent {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Ensure the modal content takes full height */
+}
+
+.variablesList {
+  overflow-y: auto;
+  flex-grow: 1; /* Allow the list to take up remaining space */
+}
+
+.variableItem {
+  padding: 10px; /* Example padding, adjust as needed */
+}
+
+
+/* Sections Modal */
+.stackBackground {
+  background-color: var(--CT-colors-paper-background);
+}
+
+.inputFieldPaper {
+  border: 0px;
+  background-color: transparent;
+}
+
+.inputFieldLabelFlex {
+  min-width: 150px;
+  flex-wrap: wrap;
+}
+
+.inputFieldLabelText {
+  overflow: visible;
+  word-break: break-word;
+}
+
+/* Input field with label */
+@media (max-width: rem(400px)) {
+  .inputFieldRoot {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .infoFieldComponentGroup {
+    flex-wrap: wrap;
+    gap: var(--mantine-spacing-xxs);
+  }
+}

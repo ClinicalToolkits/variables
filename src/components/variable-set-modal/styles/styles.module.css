@@ -1,0 +1,15 @@
+.input {
+  text-align: left;
+}
+
+.inputCenter {
+  text-align: center;
+}
+
+.calendarHeader {
+  color: var(--CT-colors-text-primary);
+}
+
+.labelText {
+  font-size: var(--mantine-font-size-xs);
+}

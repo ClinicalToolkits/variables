@@ -1,0 +1,16 @@
+## User-based values can be set in the .npmrc file in the user's home directory (e.g., for Windows: C:\Users\username\.npmrc, for Unix: ~/.npmrc), these will apply to all projects.
+## Alternatively, project-based values can be set in the .npmrc file in the root of the project (like this file), these will only apply to the project.
+## The values in the project's .npmrc file take precedence over the values in the user's .npmrc file.
+## In order to use the GitHub Packages registry, you need to authenticate with GitHub Packages. For more information, see "https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry".
+## In order to install the updated Clinical Toolkits packages, you can either uncomment the below code (specificed with a single #), or create a user-based .npmrc file with the below code at the location specified on line 1.
+## You will need to replace YOUR_GITHUB_AUTH_TOKEN_HERE with your GitHub authentication token (see the link above for more information).
+## If using the local .npmrc file, you will need to change the name from .npmrc.template to ".npmrc".
+
+## Default registry. Typically doesn't need to be uncommented unless you've specified a different registry in your user-based .npmrc file.
+#registry=https://registry.npmjs.org/
+
+## GitHub Packages registry for Clinical Toolkits packages. This tells npm to look for packages beginning with @clinicaltoolkits in the GitHub Packages registry.
+#@clinicaltoolkits:registry=https://npm.pkg.github.com/
+
+## GitHub Packages authentication token. Uncomment the below line and replace YOUR_GITHUB_AUTH_TOKEN_HERE with your GitHub authentication token.
+#//npm.pkg.github.com/:_authToken=YOUR_GITHUB_AUTH_TOKEN_HERE
