@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Checkbox, Stack, Anchor, rem } from "@mantine/core";
 import { textStyles } from "@clinicaltoolkits/universal-react-components";
-
-import styles from "./styles.module.css";
+import { convertStringToTag, getPluralNameFromTag } from "@clinicaltoolkits/type-definitions";
 import { shouldDisplayVariables, useVariableContext } from "../../contexts";
 import { addSpaces } from "@clinicaltoolkits/utility-functions";
+import styles from "./styles.module.css";
 
 type VariableCheckboxGroupProps = {
   subgroups: Record<string, string[]>; // Adjusted to reflect the actual data structure
@@ -14,7 +14,6 @@ export const VariableCheckboxGroup: React.FC<VariableCheckboxGroupProps> = ({ su
   const { markVariablesHidden, variableMap } = useVariableContext();
   const [showAll, setShowAll] = useState(false);
   const subgroupKeys = Object.keys(subgroups); // Convert subgroups to an array of keys
-  const baseLabel = "Display optional";
 
   return (
     <Stack gap={rem("5px")}>
@@ -23,7 +22,7 @@ export const VariableCheckboxGroup: React.FC<VariableCheckboxGroupProps> = ({ su
         {subgroupKeys.slice(0, 1).map((subgroupKey, index) => (
           <Checkbox
             key={index}
-            label={`${baseLabel} ${addSpaces({ text: subgroupKey })}s`}
+            label={getDisplayTextFromSubgroupKey(subgroupKey)}
             checked={shouldDisplayVariables(subgroups[subgroupKey], variableMap)}
             onChange={(event) => {
               console.log("event.currentTarget.checked", event.currentTarget.checked);
@@ -39,7 +38,7 @@ export const VariableCheckboxGroup: React.FC<VariableCheckboxGroupProps> = ({ su
           subgroupKeys.slice(1).map((subgroupKey, index) => (
             <Checkbox
               key={index}
-              label={`${baseLabel} ${addSpaces({ text: subgroupKey })}s`}
+              label={getDisplayTextFromSubgroupKey(subgroupKey)}
               checked={shouldDisplayVariables(subgroups[subgroupKey], variableMap)}
               onChange={(event) => {
                 console.log("event.currentTarget.checked", event.currentTarget.checked);
@@ -61,4 +60,19 @@ export const VariableCheckboxGroup: React.FC<VariableCheckboxGroupProps> = ({ su
       )}
     </Stack>
   );
+};
+
+const getDisplayTextFromSubgroupKey = (subgroupKey: string): string => {
+  let displayText = "Include" + " ";
+  const tag = convertStringToTag(subgroupKey);
+
+  if (tag) {
+    displayText += addSpaces({ text: getPluralNameFromTag(tag) });
+  } else {
+    displayText += `${addSpaces({ text: subgroupKey })}s`;
+  }
+
+  displayText += " " + "(optional)";
+
+  return displayText;
 };

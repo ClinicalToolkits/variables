@@ -2,5 +2,6 @@ import { ComboboxData, convertObjectArrayToComboboxDataArray } from "@clinicalto
 import { VariableSet } from "../../../types";
 
 export const getVariableSetsAsComboboxData = (variableSets: VariableSet[]): ComboboxData[] => {
-  return convertObjectArrayToComboboxDataArray(variableSets, "key", "metadata.label");
+  const data = convertObjectArrayToComboboxDataArray({ array: variableSets, idPath: "idToken.id", labelPath: "label", bUppercase: true });
+  return data;
 };

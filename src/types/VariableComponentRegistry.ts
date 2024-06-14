@@ -1,5 +1,5 @@
 import { DataType } from "@clinicaltoolkits/type-definitions";
-import { AgeRangeInputElement, AgeInputElement, NumberInputElement, TextInputElement, SelectInputElement } from "@clinicaltoolkits/universal-react-components";
+import { AgeRangeInputElement, AgeInputElement, NumberInputElement, TextInputElement, SelectInputElement, NumberRangeInputElement } from "@clinicaltoolkits/universal-react-components";
 
 export const variableComponentRegistry = {
   ageRange: AgeRangeInputElement,
@@ -9,6 +9,7 @@ export const variableComponentRegistry = {
   [DataType.T_SCORE]: NumberInputElement,
   [DataType.RAW_SCORE]: NumberInputElement,
   [DataType.PERCENTILE_RANK]: NumberInputElement,
+  [DataType.PERCENTILE_RANGE]: NumberRangeInputElement,
   [DataType.QUALITATIVE]: TextInputElement,
   [DataType.DESCRIPTOR]: SelectInputElement,
   [DataType.DROPDOWN]: SelectInputElement,

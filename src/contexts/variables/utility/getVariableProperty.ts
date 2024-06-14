@@ -68,7 +68,7 @@ export function getVariablePropertyFromKeyPath(variableMap: VariableMap, keyPath
       if (Array.isArray(associatedSubvariableProperties)) {
         let filteredSubvariableProperties: AssociatedSubvariableProperties[] = [];
         associatedSubvariableProperties.forEach(subvarProperty => {
-          const subvariable = variableMap.get(subvarProperty.key);
+          const subvariable = variableMap.get(subvarProperty.id);
           if (!subvariable) return; // Skip if the full subvariable is not found
           if (bRemoveUnusedVariables) {
             if (subvarProperty.bValueEntered && shouldDisplayVariable(subvariable)) {
@@ -93,7 +93,7 @@ export function getVariablePropertyFromKeyPath(variableMap: VariableMap, keyPath
       if (Array.isArray(associatedSubvariableProperties)) {
         let filteredSubvariableProperties: AssociatedSubvariableProperties[] = [];
         associatedSubvariableProperties.forEach(subvarProperty => {
-          const subvariable = variableMap.get(subvarProperty.key);
+          const subvariable = variableMap.get(subvarProperty.id);
           if (!subvariable) return; // Skip if the full subvariable is not found
           if (bRemoveUnusedVariables) {
             if (subvarProperty.bValueEntered && shouldDisplayVariable(subvariable)) {

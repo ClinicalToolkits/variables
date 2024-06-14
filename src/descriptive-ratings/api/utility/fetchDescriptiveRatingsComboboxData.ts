@@ -3,6 +3,6 @@ import { fetchDescriptiveRatingSets } from "../fetchDescriptiveRatings";
 
 export const fetchDescriptiveRatingsComboboxData = async (): Promise<ComboboxData[]> => {
   const descriptiveRatingSets = await fetchDescriptiveRatingSets();
-  const descriptiveRatingsComboxData = convertObjectArrayToComboboxDataArray(descriptiveRatingSets, 'id', 'fullName');
+  const descriptiveRatingsComboxData = convertObjectArrayToComboboxDataArray({ array: descriptiveRatingSets, idPath: 'id', labelPath: 'fullName' });
   return descriptiveRatingsComboxData;
 };

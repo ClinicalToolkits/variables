@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useVariableContext } from "../../contexts";
-import { VariableSet } from "../../types";
+import { Variable, VariableSet } from "../../types";
 import { ComboboxData } from "@clinicaltoolkits/type-definitions";
 import { getVariableSetsAsComboboxData } from "./utility";
-import { SingleSelectDropdown } from "@clinicaltoolkits/universal-react-components";
+import { GenericTable, SingleSelectDropdown, TableColumn } from "@clinicaltoolkits/universal-react-components";
 import { VariableSetModal } from "./VariableSetModal";
-import { Anchor } from "@mantine/core";
+import { Anchor, Button } from "@mantine/core";
+import { generateUnifiedTableData } from "../../utility";
+import { VariableResultsTable } from "../VariableResultsTable";
 
 export const VariableSetSelector: React.FC = () => {
-  const { variableSetMap } = useVariableContext();
+  const { variableSetMap, getRelatedVariablesBySet } = useVariableContext();
   const [selectedVariableSet, setSelectedVariableSet] = useState<VariableSet | null>(null);
   const [variableSetComboboxData, setVariableSetComboboxData] = useState<ComboboxData[]>([]);
   const [bOpened, setOpened] = useState(false);
@@ -36,11 +38,16 @@ export const VariableSetSelector: React.FC = () => {
         headingProps={{ 
           headingProps: { order: 4, ta: "left" },
         }}
-        headingChildren={[<SingleSelectDropdown
-          label="Select Variable Set"
-          options={variableSetComboboxData}
-          onChange={handleVariableSetSelection}
-        />]}
+        headingChildren={[
+          <SingleSelectDropdown
+            key={0}
+            label="Select Variable Set"
+            options={variableSetComboboxData}
+            onChange={handleVariableSetSelection}
+          />,
+          selectedVariableSet && <Button onClick={() => console.log("VariableSetSelector - Variables from set: ", getRelatedVariablesBySet(selectedVariableSet, true, true))}>Log Variables</Button>,
+          <VariableResultsTable selectedVariableSet={selectedVariableSet} />
+        ]}
       />
       <Anchor type='button' onClick={() => setOpened(!bOpened)}>Variable Input Fields</Anchor>
     </>

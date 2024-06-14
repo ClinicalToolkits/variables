@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { HeadingProps, InfoFieldModal } from "@clinicaltoolkits/universal-react-components";
 import { MantineSize } from "@mantine/core";
 import { InfoFieldClassNames, PathsToFields } from "@clinicaltoolkits/type-definitions";
 import { getOptionalVariableSubgroups, handleAutoVariableUpdates, useSortAndGroupVariables, useVariableContext } from "../../contexts";
 import { Variable, VariableSet, getVariableInputConfig } from "../../types";
-import { VariableCheckboxGroup } from "./VariableCheckboxGroup";import styles from "./styles.module.css";
+import { VariableCheckboxGroup } from "./VariableCheckboxGroup";
+import { ActionCheckboxProvider, ActionCheckboxes } from "./ActionCheckbox";
+import styles from "./styles.module.css";
 
 export interface VariableSetModalProps {
   variableSet?: VariableSet | null;
@@ -25,9 +27,10 @@ export interface VariableSetModalProps {
  * @param titleChildren - Array of React nodes to display in the title section of the modal.
  */
 export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet, headingChildren = [], opened, onClose, headingProps, inputSize = "sm", classNames }) => {
-  const { variableMap, setVariable } = useVariableContext();
+  const { variableMap, setVariable, getVariablesArray } = useVariableContext();
   const { variableGroups } = useSortAndGroupVariables(variableSet);
-
+  console.log("variableSet: ", variableSet);
+  console.log("variableGroups: ", variableGroups);
   const handleVariableUpdate = (id: string | number, propertyPath: PathsToFields<Variable>, value: any) => {
     if (typeof id !== "string") return;
     console.log("variable updated: ", id, propertyPath, value);
@@ -37,11 +40,12 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
 
   const defaultHeadingProps: HeadingProps = {
     headingProps: { order: 4, ta: "left" },
-    headingText: variableSet?.metadata?.label ? variableSet.metadata.label : "Variable Set Viewer",
+    headingText: variableSet?.label ? variableSet.label : "Variable Set Viewer",
     bPaper: true,
     children: [
       headingChildren,
-      variableSet && <VariableCheckboxGroup subgroups={getOptionalVariableSubgroups(variableSet)} />
+      variableSet && <VariableCheckboxGroup key={headingChildren.length} subgroups={getOptionalVariableSubgroups(variableSet)} />,
+      variableSet && <ActionCheckboxes key={variableSet.idToken.id} inOwningId={variableSet.idToken.id} inIds={variableSet.variableIds.all} />,
     ],
     classNames: {
       root: styles.headingRoot,
@@ -55,8 +59,10 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
     ...classNames?.infoField,
   };
 
+  console.log("variableGroups: ", variableGroups);
+
   return (
-    <>
+    <ActionCheckboxProvider>
       <InfoFieldModal
         fullScreen
         opened={opened}
@@ -69,7 +75,7 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
         gap={0}
         classNames={infoFieldClassNames}
       />
-    </>
+    </ActionCheckboxProvider>
   );
 };
 

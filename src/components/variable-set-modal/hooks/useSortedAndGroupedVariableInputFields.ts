@@ -35,8 +35,8 @@ export const useSortedAndGroupedVariableInputFields = (
       .forEach((variableKey) => {
         const variable = variableMap.get(variableKey);
         const bParentVariable =
-          variable?.metadata?.childVariableKeys !== undefined && variable.metadata?.childVariableKeys.length > 0;
-        const bChildVariable = variable?.metadata?.properties?.childVariable?.parentVariableKey !== undefined;
+          variable?.metadata?.childVariableIds !== undefined && variable.metadata?.childVariableIds.length > 0;
+        const bChildVariable = variable?.metadata?.properties?.childVariable?.parentVariableId !== undefined;
         if (!variable) return;
 
         const inputField = convertVariableToInputField(variable);
@@ -79,12 +79,12 @@ export const useSortedAndGroupedVariableInputFields = (
 };
 
 const convertVariableToInputField = (variable: Variable): InputField => ({
-  key: variable.key,
+  key: variable.idToken.id,
   value: variable.value,
   displayName: variable.fullName,
   type: variable.dataType,
   metadata: {
-    childInputFieldKeys: variable.metadata?.childVariableKeys,
+    childInputFieldKeys: variable.metadata?.childVariableIds,
     bHidden: variable.metadata?.bHidden,
     description: variable.metadata?.description,
     orderWithinSet: variable.orderWithinSet,
@@ -94,7 +94,7 @@ const convertVariableToInputField = (variable: Variable): InputField => ({
     options: variable.metadata?.dropdownOptions,
     pronounKeys:
       variable.fullName === "Gender"
-        ? variable.metadata?.associatedSubvariableProperties?.map((subvariableProperties) => subvariableProperties.key)
+        ? variable.metadata?.associatedSubvariableProperties?.map((subvariableProperties) => subvariableProperties.id)
         : undefined,
   },
   props: {

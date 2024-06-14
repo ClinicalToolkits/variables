@@ -5,7 +5,7 @@ export const getNonNullAssociatedSubvariableKeys = (variable: Variable): string[
   if (variable.metadata?.associatedSubvariableProperties) {
     variable.metadata.associatedSubvariableProperties.forEach((subvariable) => {
       if (subvariable.bValueEntered) {
-        nonNullKeys.push(subvariable.key);
+        nonNullKeys.push(subvariable.id);
       }
     });
   } else {

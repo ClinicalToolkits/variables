@@ -31,6 +31,7 @@ const Test: React.FC = () => {
   const { addVariableSet } = useVariableContext();
   const [bInitialized, setInitialized] = React.useState(false);
 
+
   const handleSignIn = async () => {
     const authTokenResponse = await getSupabaseClient().auth.signInWithPassword({ email: "nicholaskhendrickson@gmail.com", password: "Zargoth.2" });
     if (authTokenResponse.error) {

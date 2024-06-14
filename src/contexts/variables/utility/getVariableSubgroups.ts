@@ -1,13 +1,13 @@
-import { capitalizeFirstLetter } from "@clinicaltoolkits/utility-functions";
+import { addSpaces, capitalizeFirstLetter } from "@clinicaltoolkits/utility-functions";
 import { VariableSet, VariableMap, Variable } from "../../../types";
 import { shouldDisplayVariables } from "./shouldDisplayVariables";
 
 export const getRequiredVariableSubgroups = (variableSet: VariableSet): Record<string, string[]> => {
-  const variableSubgroupKeys = variableSet.variableKeys.subgroups;
+  const variableIdsBySubgroup = variableSet.variableIds.subgroups;
   const requiredVariableSubgroups: Record<string, string[]> = {};
 
-  if (variableSubgroupKeys) {
-    Object.entries(variableSubgroupKeys).forEach(([subgroupTag, { required }]) => {
+  if (variableIdsBySubgroup) {
+    Object.entries(variableIdsBySubgroup).forEach(([subgroupTag, { required }]) => {
       if (required && required.length > 0) {
         requiredVariableSubgroups[subgroupTag] = required;
       }
@@ -18,11 +18,11 @@ export const getRequiredVariableSubgroups = (variableSet: VariableSet): Record<s
 };
 
 export const getOptionalVariableSubgroups = (variableSet: VariableSet): Record<string, string[]> => {
-  const variableSubgroupKeys = variableSet.variableKeys.subgroups;
+  const variableIdsBySubgroup = variableSet.variableIds.subgroups;
   const optionalVariableSubgroupKeys: Record<string, string[]> = {};
 
-  if (variableSubgroupKeys) {
-    Object.entries(variableSubgroupKeys).forEach(([subgroupTag, { optional }]) => {
+  if (variableIdsBySubgroup) {
+    Object.entries(variableIdsBySubgroup).forEach(([subgroupTag, { optional }]) => {
       if (optional && optional.length > 0) {
         optionalVariableSubgroupKeys[subgroupTag] = optional;
       }
@@ -75,15 +75,15 @@ export function getSubgroupNameForVariable(variable: Variable): string {
   if (variable.subgroupTag) {
     if (variable.subgroupTag?.metadata?.pluralName) {
       // If the subgroup tag has a plural name, use that as the name of the subgroup
-      pluralizedName = capitalizeFirstLetter(variable.subgroupTag?.metadata?.pluralName);
+      pluralizedName = addSpaces({ text: variable.subgroupTag?.metadata?.pluralName, bTitleCase: true });
       if (bOptionalVariable) {
         pluralizedName = `Optional ${pluralizedName}`;
       }
     } else {
       // If the subgroup tag does not have a plural name, use the name of the subgroup tag and pluralize it by adding an 's'
-      pluralizedName = `${capitalizeFirstLetter(variable.subgroupTag.name)}s`;
+      pluralizedName = `${addSpaces({ text: variable.subgroupTag.name, bTitleCase: true })}s`;
       if (bOptionalVariable) {
-        pluralizedName = `Optional ${pluralizedName}s`;
+        pluralizedName = `Optional ${pluralizedName}`;
       }
     }
   }

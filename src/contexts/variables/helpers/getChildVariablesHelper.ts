@@ -1,13 +1,13 @@
 import { Variable, VariableMap } from "../../../types";
 
 export const getChildVariablesHelper = (variable: Variable, variableMap: VariableMap): Variable[] | null => {
-  const bChildVariablesExist = variable.metadata?.childVariableKeys && variable.metadata?.childVariableKeys.length > 0;
+  const bChildVariablesExist = variable.metadata?.childVariableIds && variable.metadata?.childVariableIds.length > 0;
   if (!bChildVariablesExist) {
     return null;
   }
   const childVariables: Variable[] = [];
-  variable.metadata?.childVariableKeys?.forEach((key) => {
-    const childVariable = variableMap.get(key);
+  variable.metadata?.childVariableIds?.forEach((id) => {
+    const childVariable = variableMap.get(id);
     if (childVariable) {
       childVariables.push(childVariable);
     }

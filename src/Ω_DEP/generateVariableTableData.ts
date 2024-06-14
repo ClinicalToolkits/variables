@@ -1,3 +1,4 @@
+/*
 import { Variable } from "../../types";
 
 export function generateVariableTableData(variables: Variable[]): string[][] {
@@ -40,3 +41,4 @@ export function generateVariableTableData(variables: Variable[]): string[][] {
 
   return result;
 }
+*/

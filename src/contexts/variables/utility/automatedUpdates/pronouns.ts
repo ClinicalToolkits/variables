@@ -3,21 +3,21 @@ import { VariableMap, SetVariableFunction } from "../../../../types";
 
 export const handleAutoPronounUpdates = (
   genderValue: string,
-  pronounKeys: string[],
+  pronounIds: string[],
   variableMap: VariableMap,
   setVariable: SetVariableFunction
 ): Record<string, string> => {
   const updatedPronounValues: Record<string, string> = {};
-  pronounKeys?.forEach((pronounKey: string) => {
-    const pronounVariable = variableMap.get(pronounKey);
+  pronounIds?.forEach((pronounId: string) => {
+    const pronounVariable = variableMap.get(pronounId);
     if (pronounVariable) {
       const pronounValue = getPronounValue(pronounVariable.abbreviatedName, genderValue);
       if (pronounValue) { 
-        setVariable(pronounVariable.key, pronounValue ?? "");
-        updatedPronounValues[pronounKey] = pronounValue;
+        setVariable(pronounVariable.idToken.id, pronounValue ?? "");
+        updatedPronounValues[pronounId] = pronounValue;
       }
     } else {
-      console.error(`Pronoun variable not found for key: ${pronounKey}`);
+      console.error(`Pronoun variable not found for id: ${pronounId}`);
     }
   });
   return updatedPronounValues;

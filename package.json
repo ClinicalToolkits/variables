@@ -1,6 +1,6 @@
 {
   "name": "@clinicaltoolkits/variables",
-  "version": "1.0.82",
+  "version": "1.0.157",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -46,9 +46,9 @@
     "webpack-dev-server": "^4.15.1"
   },
   "dependencies": {
-    "@clinicaltoolkits/type-definitions": "^1.0.165",
-    "@clinicaltoolkits/universal-react-components": "^1.0.811",
-    "@clinicaltoolkits/utility-functions": "^1.0.29"
+    "@clinicaltoolkits/type-definitions": "^1.0.289",
+    "@clinicaltoolkits/universal-react-components": "^1.0.865",
+    "@clinicaltoolkits/utility-functions": "^1.0.52"
   },
   "peerDependencies": {
     "@mantine/core": "^7.9.0",

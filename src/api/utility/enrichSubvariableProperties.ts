@@ -5,7 +5,7 @@ export const enrichSubvariableProperties = (variable: Variable, variables: Varia
     // Map through each associatedSubvariable to update its properties
     const enrichedSubvariables = variable.metadata.associatedSubvariableProperties.map(subvariableProperty => {
       // Find the subvariable in finalData using the enriched subvar's id
-      const correspondingSubvar = variables.find(v => v.key === subvariableProperty.id);
+      const correspondingSubvar = variables.find(v => v.idToken.id === subvariableProperty.id);
       
       if (correspondingSubvar) {
         // If a matching subvariable is found, enrich the current subvar object

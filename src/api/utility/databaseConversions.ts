@@ -1,10 +1,22 @@
 import { Tag, asUUID, generateUUID, convertStringToTag, tags as tagsRecord } from "@clinicaltoolkits/type-definitions";
 import { FetchVariablesParams } from "../fetchVariable";
 import { getAbbreviatedVariablePlaceholder, getVariablePlaceholder } from "./getPlaceholders";
-import { isEmptyValue } from "@clinicaltoolkits/utility-functions";
-import { DBVariable, DBVariableMetadata, Variable, VariableMetadata } from "../../types";
+import { RegexRule, applyRegexRules, batchApplyRegexRules, isEmptyValue, isStringArray } from "@clinicaltoolkits/utility-functions";
+import { DBVariable, DBVariableMetadata, Interpretation, InterpretationData, Variable, VariableIdToken, VariableMetadata, isInterpretationData } from "../../types";
+import { appendPrefixToVariablesRule, removePrefixesFromVariablesRule } from "../../utility";
 
-export function convertDBVariableToVariable(dbVariable: DBVariable, uniqueSuffix?: string, variableSetParams?: FetchVariablesParams['variableSetParams']): Variable {
+const convertActionParamIds = (actionParams: { name: string, label?: string, [key: string]: any }, rules: RegexRule[]): { name: string, [key: string]: any } => {
+  return Object.entries(actionParams).reduce((acc, [key, value]) => {
+    if (key === "ids" && isStringArray(value)) {
+      acc[key] = batchApplyRegexRules(value, rules);
+    } else {
+      acc[key] = value;  // Preserve the original key-value pair
+    }
+    return acc;
+  }, {} as { name: string, label?: string, [key: string]: any });
+};
+
+export function convertDBVariableToVariable(dbVariable: DBVariable, entityId?: string, entityVersionId?: string, labelPrefix?: string, variableSetParams?: FetchVariablesParams['variableSetParams']): Variable {
   const {
     id,
     full_name,
@@ -18,14 +30,15 @@ export function convertDBVariableToVariable(dbVariable: DBVariable, uniqueSuffix
   } = dbVariable;
 
   const tags: Tag[] = tag_ids?.map((tagId) => tagsRecord[tagId]) ?? [];
+  const variableIdToken = new VariableIdToken({ variableId: id, entityId, entityVersionId });
 
   const convertedVariable: Variable = {
-    id: id,
-    key: uniqueSuffix ? `${id}_${uniqueSuffix}` : id,
-    value: undefined,
+    idToken: variableIdToken,
+    value: metadata?.initialValue ?? undefined,
     fullName: full_name,
     abbreviatedName: abbreviated_name,
-    variableSetKey: variableSetParams?.key,
+    label: labelPrefix || associated_entity_abbreviated_name ? `${labelPrefix || associated_entity_abbreviated_name} - ${full_name}` : full_name,
+    variableSetId: variableSetParams?.idToken.id,
     tagIds: tag_ids,
     tags: tags,
     dataType: data_type,
@@ -33,18 +46,17 @@ export function convertDBVariableToVariable(dbVariable: DBVariable, uniqueSuffix
     orderWithinSet: order_within_set,
     metadata: {
       ...metadata,
-      properties: variableSetParams?.subversion ? {
-        sectionSubversion: variableSetParams.subversion,
-      } : undefined,
-      associatedCompositeVariableKey: metadata?.associatedCompositeVariableId ? uniqueSuffix ? `${metadata.associatedCompositeVariableId}_${uniqueSuffix}` : metadata.associatedCompositeVariableId : undefined,
+      associatedCompositeVariableId: metadata?.associatedCompositeVariableId ? variableIdToken.cloneWithChanges({ variableId: metadata.associatedCompositeVariableId }).id : undefined,
       associatedSubvariableProperties: metadata?.associatedSubvariableIds?.map((subvarId: string) => ({
-        id: subvarId,
-        key: uniqueSuffix ? `${subvarId}_${uniqueSuffix}` : subvarId,
+        id: variableIdToken.cloneWithChanges({ variableId: subvarId }).id,
+        key: variableIdToken.cloneWithChanges({ variableId: subvarId }).id,
         fullName: "placeholder", // Must be set after the subvariable is created
         bValueEntered: false,
       })),
       placeholder: getVariablePlaceholder(data_type),
       abbreviatedPlaceholder: getAbbreviatedVariablePlaceholder(data_type),
+      interpretationData: metadata?.interpretationData ? parseInterpretationData(metadata.interpretationData, [appendPrefixToVariablesRule(`${entityId}:${entityVersionId}`, ['{', '}'])]) : undefined,
+      actionParams: metadata?.actionParams ? convertActionParamIds(metadata.actionParams, [appendPrefixToVariablesRule(`${entityId}:${entityVersionId}`, ['', ''])]) : undefined,
     },
     associatedEntityAbbreviatedName: associated_entity_abbreviated_name,
   }
@@ -62,7 +74,7 @@ export function convertVariableToDBVariable(variable: Variable): DBVariable {
 export function convertVariablePropertiesToDB(variable: Partial<Variable>): Partial<DBVariable> {
   let dbVariable: Partial<DBVariable> = {};
 
-  if (variable.id !== undefined) dbVariable.id = isEmptyValue(variable.id) ? generateUUID() : asUUID(variable.id);
+  if (variable.idToken !== undefined) dbVariable.id = isEmptyValue(variable.idToken.databaseId) ? generateUUID() : variable.idToken.databaseId;
   if (variable.fullName !== undefined) dbVariable.full_name = variable.fullName;
   if (variable.abbreviatedName !== undefined) dbVariable.abbreviated_name = variable.abbreviatedName;
   if (variable.dataType !== undefined) dbVariable.data_type = variable.dataType;
@@ -97,6 +109,8 @@ const getDBVariableMetadataProperties = (metadata?: VariableMetadata | null): DB
     associatedSubvariableIds: getDBVariableMetadataProperty(metadata?.associatedSubvariableIds),
     bOptional: getDBVariableMetadataProperty(metadata?.bOptional),
     bIncludeInDynamicTable: getDBVariableMetadataProperty(metadata?.bIncludeInDynamicTable),
+    interpretationData: parseInterpretationDataForDB(metadata?.interpretationData),
+    actionParams: metadata?.actionParams ? convertActionParamIds(metadata?.actionParams || {}, [removePrefixesFromVariablesRule(['{', '}'])]) : undefined,
   }
 
   return metadataProperties;
@@ -106,3 +120,36 @@ const getDBVariableMetadataProperty = (property: any) => {
   let bShouldAddProperty = !isEmptyValue(property);
   return bShouldAddProperty ? property : undefined;
 }
+
+const parseInterpretationData = (data: Omit<InterpretationData, "bInterpretationDataType">, rules: RegexRule[]): InterpretationData => {
+  const transform = (input: Interpretation): Interpretation => {
+    return Object.entries(input).reduce((acc, [key, value]) => {
+      const newKey = applyRegexRules(key, rules);
+      const newValue = applyRegexRules(value, rules);
+      acc[newKey] = newValue;
+      return acc;
+    }, {} as Interpretation);
+  };
+
+  return {
+    default: transform(data.default),
+    intro: data.intro ? applyRegexRules(data.intro, rules) : undefined,
+    ageGroups: data.ageGroups ? Object.fromEntries(
+      Object.entries(data.ageGroups).map(([ageRange, interpretations]) => [
+        applyRegexRules(ageRange, rules), // Transform the ageRange keys too
+        transform(interpretations)
+      ])
+    ) : undefined,
+    bInterpretationDataType: true,
+  };
+};
+
+const parseInterpretationDataForDB = (data: InterpretationData | undefined | null): Omit<InterpretationData, "bInterpretationDataType"> | null => {
+  if (!data) return null;
+  const updatedData = parseInterpretationData(data, [removePrefixesFromVariablesRule(['{', '}'])]);
+  return {
+    default: updatedData.default,
+    intro: updatedData?.intro,
+    ageGroups: updatedData.ageGroups,
+  };
+};

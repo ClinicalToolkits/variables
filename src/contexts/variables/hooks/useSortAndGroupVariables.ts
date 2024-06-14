@@ -33,14 +33,14 @@ export const useSortAndGroupVariables = (
           groupedAndSorted[subgroupName] = new Map<string, Variable>();
         }
 
-        const isChildVariable = variable?.metadata?.properties?.childVariable?.parentVariableKey !== undefined;
+        const isChildVariable = variable?.metadata?.properties?.childVariable?.parentVariableId !== undefined;
         if (isChildVariable) return;
 
-        groupedAndSorted[subgroupName].set(variable.key, variable);
+        groupedAndSorted[subgroupName].set(variable.idToken.id, variable);
 
         const childVariables = getChildVariables(variable);
         childVariables?.forEach(childVariable => {
-          groupedAndSorted[subgroupName].set(childVariable.key, childVariable);
+          groupedAndSorted[subgroupName].set(childVariable.idToken.id, childVariable);
         });
       });
 
@@ -52,8 +52,24 @@ export const useSortAndGroupVariables = (
       groupedAndSorted[groupName] = sortedMap;
     });
 
+    // Remove empty groups or groups where all variables have metadata.bHidden set to true
+    Object.keys(groupedAndSorted).forEach(groupName => {
+      if (groupedAndSorted[groupName].size === 0) {
+        delete groupedAndSorted[groupName];
+      } else {
+        const allHidden = Array.from(groupedAndSorted[groupName].values()).every(variable => variable.metadata?.bHidden);
+        if (allHidden) {
+          delete groupedAndSorted[groupName];
+        }
+      }
+    });
+
     return {
       variableGroups: groupedAndSorted,
     };
   }, [variableSet, variableMap, getChildVariables]);
+};
+
+export const sortVariables = (variables: Variable[]): Variable[] => {
+  return variables.sort((a, b) => a.orderWithinSet - b.orderWithinSet);
 };

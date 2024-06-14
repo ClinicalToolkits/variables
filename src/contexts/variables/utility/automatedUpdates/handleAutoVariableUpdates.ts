@@ -2,21 +2,21 @@
 import { handleAutoPronounUpdates } from "./pronouns";
 import { handleAutoAssessmentAgeUpdates } from "./assessmentAge";
 import { isEmptyValue } from "@clinicaltoolkits/utility-functions";
-import { VariableValue, VariableMap, SetVariableFunction, DEMOGRAPHICS } from "../../../../types";
+import { VariableValue, VariableMap, SetVariableFunction, DEMOGRAPHICS, getDemographicsId } from "../../../../types";
 
-export const handleAutoVariableUpdates =(updatedVariableKey: string, updatedValue: VariableValue, variableMap: VariableMap, setVariable: SetVariableFunction) => {
-  const updatedVariable = variableMap.get(updatedVariableKey);
+export const handleAutoVariableUpdates =(updatedVariableId: string, updatedValue: VariableValue, variableMap: VariableMap, setVariable: SetVariableFunction) => {
+  const updatedVariable = variableMap.get(updatedVariableId);
   if (updatedVariable && !isEmptyValue(updatedValue)) {
-    switch (updatedVariableKey) {
-      case DEMOGRAPHICS.GENDER: {
-        const pronounKeys = updatedVariable.metadata?.associatedSubvariableProperties?.map((subvariableProperty) => {
-          return subvariableProperty.key;
+    switch (updatedVariableId) {
+      case getDemographicsId(DEMOGRAPHICS.GENDER): {
+        const pronounIds = updatedVariable.metadata?.associatedSubvariableProperties?.map((subvariableProperty) => {
+          return subvariableProperty.id;
         });
-        if (pronounKeys && typeof updatedValue === "string") handleAutoPronounUpdates(updatedValue, pronounKeys, variableMap, setVariable);
+        if (pronounIds && typeof updatedValue === "string") handleAutoPronounUpdates(updatedValue, pronounIds, variableMap, setVariable);
         break;
       }
-      case DEMOGRAPHICS.DATE_OF_BIRTH:
-        handleAutoAssessmentAgeUpdates(updatedVariableKey, updatedValue, variableMap, setVariable);
+      case getDemographicsId(DEMOGRAPHICS.DATE_OF_BIRTH):
+        handleAutoAssessmentAgeUpdates(updatedVariableId, updatedValue, variableMap, setVariable);
         break;
     }
   }

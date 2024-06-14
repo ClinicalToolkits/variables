@@ -6,3 +6,7 @@ export enum USER_INFORMATION {
   USER_FIRST_NAME = "d9c13a90-fc38-4950-a48c-eafc619b94fb",
   USER_SIGNATURE_URL = "039e991f-74a7-4aad-b01c-3515212ed0d8",
 }
+
+export const USER_INFORMATION_PREFIX = "3516071e-8e75-4905-9b41-7a5bf03c56be:389ebbab-d08f-4981-a5de-820a162c928a";
+
+export const getUserInformationId = (userInformationId: USER_INFORMATION) => `${USER_INFORMATION_PREFIX}:${userInformationId}`;

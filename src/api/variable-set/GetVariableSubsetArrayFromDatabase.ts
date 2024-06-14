@@ -1,5 +1,5 @@
 import { getSupabaseClient } from "@clinicaltoolkits/utility-functions";
-import { convertDBVariableSubsetArrayToVariableSubsetArray } from "./convertVariableSetDBToVariableSet";
+import { convertDBVariableSetArrayToVariableSetArray } from "./convertVariableSetDBToVariableSet";
 import { VariableSet } from "../../types";
 
 export async function getVariableSubsetArrayFromDatabase(
@@ -17,7 +17,7 @@ export async function getVariableSubsetArrayFromDatabase(
       throw new Error(`Supabase error: ${error.message}`);
     }
 
-    const finalData = convertDBVariableSubsetArrayToVariableSubsetArray(data);
+    const finalData = convertDBVariableSetArrayToVariableSetArray(data);
 
     return finalData;
   } catch (error) {

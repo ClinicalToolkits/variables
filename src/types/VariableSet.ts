@@ -1,15 +1,17 @@
 import { DescriptiveRating } from "../descriptive-ratings/types/DescriptiveRating";
+import { VariableIdToken } from "./Variable";
 
 export type VariableSetMetadataDB = {
+  abbreviated_subversion?: string;
   descriptive_rating_id?: string;
   b_universally_accessible?: boolean;
 }
 
 export type VariableSetMetadata = {
-  label?: string;
   descriptiveRatingId?: string;
   descriptiveRatings?: DescriptiveRating[];
   bUniversallyAccessible?: boolean;
+  abbreviatedSubversion?: string;
 }
 
 export type VariableSubgroup = {
@@ -32,19 +34,11 @@ export type VariableSetDB = {
 }
 
 export type VariableSet = {
-  id: string;
-  entityId: string;
-  key: string;
-  abbreviatedName: string;
-  version?: number;
-  subversion?: string;
+  idToken: VariableIdToken;
+  label: string;
   variableIds: {
     all: string[]; // Here, specifying 'all' separately
     subgroups: VariableIdsBySubgroup; // And here, the rest of the subgroup categorization
-  };
-  variableKeys: {
-    all: string[]; // Doing the same for variableKeys
-    subgroups: VariableIdsBySubgroup;
   };
   metadata?: VariableSetMetadata;
 }

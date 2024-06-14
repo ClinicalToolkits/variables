@@ -1,46 +1,36 @@
 import { logger } from "@clinicaltoolkits/utility-functions";
 import { abbreviateString, createLabel } from "@clinicaltoolkits/utility-functions";
-import { VariableSet, VariableIdsBySubgroup } from "../../types";
+import { VariableSet, VariableIdsBySubgroup, VariableIdToken } from "../../types";
 
 type CreateVariableSetParams = Omit<VariableSet, "key" | "variableKeys" | "variableIds"> & {
   variableIds: VariableIdsBySubgroup;
+  entityVersionId?: string;
 };
 
-export const createVariableSet = ({ id, entityId, abbreviatedName, version, subversion, variableIds, metadata }: CreateVariableSetParams): VariableSet => {
-  const abbreviatedSubversion = subversion ? abbreviateString(subversion) : undefined;
-  let setKey = createLabel({
-    abbreviatedName: abbreviatedName,
-    version: version,
-    subversion: abbreviatedSubversion,
-  });
-
+export const createVariableSet = ({ idToken, label, variableIds, metadata }: CreateVariableSetParams): VariableSet => {
   const variableIdsAll: string[] = [];
-  const variableKeysAll: string[] = [];
   const variableSubgroups: VariableIdsBySubgroup = {};
-  const variableKeysSubgroups: VariableIdsBySubgroup = {};
 
   // Assuming the input structure matches the expected new format
   Object.entries(variableIds).forEach(([subgroupTag, { required, optional }]) => {
     // Initialize subgroup entries
     variableSubgroups[subgroupTag] = {};
-    variableKeysSubgroups[subgroupTag] = {};
 
-    const processVariables = (variables: string[] | undefined, key: 'required' | 'optional') => {
-      const keys: string[] = variables?.map(id => {
-        let variableKey = id;
-        if (abbreviatedSubversion) variableKey = variableKey.concat(`_${abbreviatedSubversion}`);
-        logger.debug(`createVariableSet() - Pushing ${key} variableKey: ${variableKey}.`);
+    const processVariables = (variableIds: string[] | undefined, optionalGroupingKey: 'required' | 'optional') => {
+      const subgroupVariableIds: string[] = [];
+      const ids: string[] = variableIds?.map(id => {
+        let variableIdToken = idToken.cloneWithChanges({ variableId: id });
+        logger.debug(`createVariableSet() - Pushing ${id} variableIdToken: ${variableIdToken}.`);
 
         // Adding to all lists
-        variableIdsAll.push(id);
-        variableKeysAll.push(variableKey);
+        subgroupVariableIds.push(variableIdToken.id);
+        variableIdsAll.push(variableIdToken.id);
 
-        return variableKey;
+        return variableIdToken.id;
       }) ?? [];
 
-      if (keys.length > 0) {
-        variableSubgroups[subgroupTag][key] = variables;
-        variableKeysSubgroups[subgroupTag][key] = keys;
+      if (ids.length > 0) {
+        variableSubgroups[subgroupTag][optionalGroupingKey] = subgroupVariableIds;
       }
     };
 
@@ -49,19 +39,11 @@ export const createVariableSet = ({ id, entityId, abbreviatedName, version, subv
   });
 
   const variableSet: VariableSet = {
-    id,
-    entityId,
-    key: setKey,
-    abbreviatedName,
-    version,
-    subversion: abbreviatedSubversion,
+    idToken,
+    label: label.toUpperCase(),
     variableIds: {
       all: variableIdsAll,
       subgroups: variableSubgroups,
-    },
-    variableKeys: {
-      all: variableKeysAll,
-      subgroups: variableKeysSubgroups,
     },
     metadata,
   };

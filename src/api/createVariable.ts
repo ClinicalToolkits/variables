@@ -14,7 +14,7 @@ export async function createVariable(variable: Variable) {
     const { data, error } = await supabaseClient
       .from('variables')
       .insert(dbVariable)
-      .eq("id", variable.id);
+      .eq("id", variable.idToken.databaseId);
   
     if (error) {
       logger.error('Error creating variable:', error);

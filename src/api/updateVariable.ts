@@ -6,7 +6,7 @@ export async function updateVariable(id: string, variableProperties: Partial<Var
 
   try {
     const supabaseClient = getSupabaseClient();
-    variableProperties.id = id; // Ensure the id is set to the variable being updated
+    if (variableProperties?.idToken) variableProperties.idToken.variableId = id; // Ensure the id is set to the variable being updated
     const updatedProperties = convertVariablePropertiesToDB(variableProperties);
 
     logger.info('Updating variable with properties:', updatedProperties);

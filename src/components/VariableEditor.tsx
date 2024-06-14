@@ -34,7 +34,7 @@ export const VariableModal: React.FC<SectionModalProps> = ({ bOpened, onClose, v
     try {
       if (mode === 'update') {
         if (variable) {
-          await updateVariable(variable.id, selectedVariable);
+          await updateVariable(variable.idToken.id, selectedVariable);
           onVariableUpdated?.(selectedVariable);
 
           logger.debug("Updated variable: ", selectedVariable);

@@ -7,8 +7,8 @@ import { fetchVariables } from "../api";
 import { Variable, getVariableObjectConfig, convertVariablesToComboboxData } from "../types";
 import { fetchDescriptiveRatingSets } from "../descriptive-ratings/api";
 
-const tagsComboboxData: ComboboxData[] = convertObjectArrayToComboboxDataArray(Object.values(tags), 'id', 'name');
-const entitiesComboboxData: ComboboxData[] = convertObjectArrayToComboboxDataArray(Object.values(entityRecords), 'abbreviatedName', 'abbreviatedName', 'name');
+const tagsComboboxData: ComboboxData[] = convertObjectArrayToComboboxDataArray({ array: Object.values(tags), idPath: 'id', labelPath: 'name' });
+const entitiesComboboxData: ComboboxData[] = convertObjectArrayToComboboxDataArray({array: Object.values(entityRecords), idPath: 'abbreviatedName', labelPath: 'abbreviatedName', searchTermsPath: 'name'});
 
 export const VariableTable = () => {
   const [variables, setVariables] = useState<Variable[]>([]);
@@ -25,7 +25,7 @@ export const VariableTable = () => {
     setVariables(variables);
 
     const descriptiveRatingSets = await fetchDescriptiveRatingSets();
-    let localDescriptiveRatingComboxData = convertObjectArrayToComboboxDataArray(descriptiveRatingSets, 'id', 'fullName');
+    let localDescriptiveRatingComboxData = convertObjectArrayToComboboxDataArray({ array: descriptiveRatingSets, idPath: 'id', labelPath: 'fullName' });
     setDescriptiveRatingSetComboxData(localDescriptiveRatingComboxData);
 
     const localVariablesComboxData = convertVariablesToComboboxData(variables);
@@ -49,7 +49,7 @@ export const VariableTable = () => {
   const handleSelectedVariableUpdate = (updatedVariable: Variable) => {
     let bFoundVariable = false;
     const updatedVariables = variables.map(variable => {
-      if (variable.id === updatedVariable.id) {
+      if (variable.idToken.id === updatedVariable.idToken.id) {
         bFoundVariable = true;
         return { ...variable, ...updatedVariable };
       }

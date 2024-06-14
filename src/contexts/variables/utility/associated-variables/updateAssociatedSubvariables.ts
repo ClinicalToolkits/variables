@@ -3,11 +3,11 @@ import { Variable, VariableValue } from "../../../../types";
 
 type UpdateAssociatedSubvariablePropertiesParams = {
   variable: Variable;
-  subvariableKey: string;
+  subvariableId: string;
   subVariableValue: VariableValue;
 };
 
-export const updateAssociatedSubvariableProperties = ({ variable, subvariableKey, subVariableValue }: UpdateAssociatedSubvariablePropertiesParams) => {
+export const updateAssociatedSubvariableProperties = ({ variable, subvariableId, subVariableValue }: UpdateAssociatedSubvariablePropertiesParams) => {
   // Ensure metadata exists
   if (variable.metadata) {
     // Initialize associatedSubvariable array if it doesn't exist
@@ -21,7 +21,7 @@ export const updateAssociatedSubvariableProperties = ({ variable, subvariableKey
     // Update the associatedSubvariablePropertyMap
     // If subVariableValue is null, set the associated property to false, otherwise true
     variable.metadata.associatedSubvariableProperties = variable.metadata.associatedSubvariableProperties.map((subvariableProperty) => {
-      if (subvariableProperty.key === subvariableKey) {
+      if (subvariableProperty.id === subvariableId) {
         return {
           ...subvariableProperty,
           bValueEntered: !isValueNull,
@@ -30,7 +30,7 @@ export const updateAssociatedSubvariableProperties = ({ variable, subvariableKey
       return subvariableProperty;
     });
 
-    logger.log(`Updated associatedSubvariableProperties for ${subvariableKey}: ${!isValueNull}`);
+    logger.log(`Updated associatedSubvariableProperties for ${subvariableId}: ${!isValueNull}`);
   } else {
     logger.error("Variable metadata is missing");
   }

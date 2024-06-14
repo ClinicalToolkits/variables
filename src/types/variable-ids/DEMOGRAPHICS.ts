@@ -22,3 +22,7 @@ export enum DEMOGRAPHICS {
   DATE_OF_BIRTH = "087e43e5-3768-48fb-97c5-dd621bad7d93",
   GENDER = "f73a21bc-d81b-4ce7-8047-b144bcd9ebd7",
 }
+
+export const DEMOGRAPHICS_PREFIX = "4df11c5b-136d-4e63-8c89-ed6f71f8455e:5ac2937c-39a5-4638-b510-f58a023e9d96";
+
+export const getDemographicsId = (demographicsId: DEMOGRAPHICS) => `${DEMOGRAPHICS_PREFIX}:${demographicsId}`;

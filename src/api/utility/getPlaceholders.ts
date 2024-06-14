@@ -11,6 +11,7 @@ export const getVariablePlaceholder = (type: string): string | undefined => {
     case DataType.T_SCORE:
       return "T-Score";
     case DataType.PERCENTILE_RANK:
+    case DataType.PERCENTILE_RANGE:
       return "Percentile";
     case DataType.AGE:
       return "Years:Months";
@@ -22,6 +23,7 @@ export const getVariablePlaceholder = (type: string): string | undefined => {
 export const getAbbreviatedVariablePlaceholder = (type: string): string | undefined => {
   switch (type) {
     case DataType.PERCENTILE_RANK:
+    case DataType.PERCENTILE_RANGE:
       return "%-ile";
     /*case DataType.AGE:
       return "Y:M";*/

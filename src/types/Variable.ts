@@ -1,5 +1,41 @@
-import { UUID, DataType, Tag, InfoFieldConfig, ComboboxData, ObjectInfoConfig, Age, emptyTag } from "@clinicaltoolkits/type-definitions";
+import { UUID, DataType, Tag, InfoFieldConfig, ComboboxData, ObjectInfoConfig, Age, emptyTag, asUUID, ID_SEPERATOR, UniversalIdToken } from "@clinicaltoolkits/type-definitions";
 import { DBVariableMetadata, VariableMetadata, emptyVariableMetadata } from "./VariableMetadata";
+
+export class VariableIdToken {
+  variableId: string;
+  entityId?: string;
+  entityVersionId?: string;
+
+  constructor(params: { variableId: string; entityId?: string; entityVersionId?: string }) {
+    this.variableId = params.variableId;
+    this.entityId = params.entityId;
+    this.entityVersionId = params.entityVersionId;
+  }
+
+  cloneWithChanges(changes: Partial<{ variableId: string; entityId?: string; entityVersionId?: string }>): VariableIdToken {
+    return new VariableIdToken({...this, ...changes});
+  }
+
+  get id(): string {
+    return `${this.entityId}${ID_SEPERATOR}${this.entityVersionId}${ID_SEPERATOR}${this.variableId}`;
+  }
+
+  get databaseId(): UUID {
+    return asUUID(this.variableId);
+  }
+}
+
+export const getVariableIdAsString = (idToken: VariableIdToken): string => `${idToken.entityId}${ID_SEPERATOR}${idToken.entityVersionId}${ID_SEPERATOR}${idToken.variableId}`;
+export const getVariableIdTokenFromString = (id: string): VariableIdToken => {
+  const parts = id.split(`${ID_SEPERATOR}`);
+  return new VariableIdToken({
+    entityId: parts[0],
+    entityVersionId: parts[1],
+    variableId: parts[2],
+  });
+};
+export const getVariableIdFromString = (id: string): string => id.split(`${ID_SEPERATOR}`)[2];
+export const isVariableIdString = (id: string): boolean => id.split(`${ID_SEPERATOR}`).length === 3;
 
 export interface DBVariable {
   id: UUID;
@@ -27,11 +63,11 @@ export interface DBVariable {
  * @param {VariableMetadata | null} metadata - The metadata of the variable, can be left null in the database so must check before use.
  */
 export interface Variable {
-  id: string;
-  key: string;
+  idToken: VariableIdToken;
   fullName: string;
   abbreviatedName: string;
-  variableSetKey?: string;
+  label: string;
+  variableSetId?: string;
   tagIds?: number[];
   tags?: Tag[];
   dataType: DataType;
@@ -43,11 +79,11 @@ export interface Variable {
 }
 
 export const emptyVariable: Variable = {
-  id: "",
-  key: "",
+  idToken: new VariableIdToken({ variableId: "", entityId: "", entityVersionId: "" }),
   fullName: "",
   abbreviatedName: "",
-  variableSetKey: "",
+  label: "",
+  variableSetId: "",
   tagIds: [],
   dataType: DataType.UNKNOWN,
   value: "",
@@ -58,7 +94,7 @@ export const emptyVariable: Variable = {
 };
 
 // Defines the configuration to be used when displaying the variable as an input element.
-export const getVariableInputConfig = (size?: string): InfoFieldConfig<Variable> => ({ id: { path: "key" }, propertyPath: "value", displayName: { path: "fullName" }, type: { path: "dataType" }, metadata: { path: "metadata" }, props: { size } });
+export const getVariableInputConfig = (size?: string): InfoFieldConfig<Variable> => ({ id: { path: "idToken.id" }, propertyPath: "value", displayName: { path: "fullName" }, type: { path: "dataType" }, metadata: { path: "metadata" }, props: { size } });
 
 // Defines the configuration to be used when displaying a single variable as a form (e.g., for editing it's properties and/or creating new variables).
 export const getVariableObjectConfig = (tagsComboboxData: ComboboxData[], entitiesComboboxData: ComboboxData[], descriptiveRatingSetComboxData: ComboboxData[], variablesComboboxData: ComboboxData[]): ObjectInfoConfig<Variable> => (
@@ -88,7 +124,7 @@ export const getVariableObjectConfig = (tagsComboboxData: ComboboxData[], entiti
 );
 
 export const variablePropertiesComboboxData: ComboboxData[] = [
-  { id: "id", label: "ID" },
+  { id: "idToken.id", label: "ID" },
   { id: "key", label: "Key" },
   { id: "fullName", label: "Full Name" },
   { id: "abbreviatedName", label: "Abbreviated Name" },
@@ -98,21 +134,15 @@ export const variablePropertiesComboboxData: ComboboxData[] = [
 ];
 
 export function convertVariablesToComboboxData(variables: Variable[]): ComboboxData[] {
-  return variables.map(({ id, key, fullName, associatedEntityAbbreviatedName }) => {
-    // Retrieve the subversion text using the variable key
-    const subversionText = getVariableSubversionText(key);
-    // Construct the label starting with associatedEntityAbbreviatedName if available
-    let fullLabel = associatedEntityAbbreviatedName ? `${associatedEntityAbbreviatedName} - ` : '';
-    // Add subversionText if it exists, otherwise skip to fullName
-    fullLabel += subversionText ? `${subversionText} - ${fullName}` : fullName;
-
+  return variables.map(({ idToken, label }) => {
     return {
-      id: key || id.toString(),
-      label: fullLabel,
+      id: idToken.id,
+      label: label,
     };
   });
 }
 
+/*
 export function getVariableSubversionText(variableKey: string): string {
   const parts = variableKey.split("_");
   for (let i = 1; i < parts.length; i++) {
@@ -122,6 +152,7 @@ export function getVariableSubversionText(variableKey: string): string {
   }
   return '';
 }
+*/
 
 /* CLASS BASED APPROACH
 type DeepPartial<T> = {

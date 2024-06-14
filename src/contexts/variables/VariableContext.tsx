@@ -11,11 +11,22 @@ import {
   GetVariableSubgroupByNameFunction,
 } from "./VariableContextTypes";
 import { markVariablesHiddenHelper, getClientAgeHelper } from "./helpers";
-import {  Tag, DataType } from "@clinicaltoolkits/type-definitions";
+import {  Tag, DataType, PathsToFields, setValueByPath } from "@clinicaltoolkits/type-definitions";
 import { logger } from "@clinicaltoolkits/utility-functions";
 import { getChildVariablesHelper } from "./helpers/getChildVariablesHelper";
 import { fetchVariablesFromSet } from "../../api";
-import { VariableMap, AddVariableFunction, RemoveVariableFunction, SetVariableFunction, Variable, VariableValue, VariableSet } from "../../types";
+import {
+  VariableMap,
+  AddVariableFunction,
+  RemoveVariableFunction,
+  SetVariableFunction,
+  Variable,
+  VariableValue,
+  VariableSet,
+  getVariableInterpretation,
+  SetVariablePropertyFunction,
+  BatchSetVariablePropertyFunction
+} from "../../types";
 import { getDescriptorFromParentVariable } from "../../utility/getDescriptor";
 import { getPercentileRankFromParentVariable } from "../../utility/getPercentileRank";
 import { updateAssociatedSubvariableProperties } from "./utility";
@@ -24,6 +35,8 @@ import { fetchDescriptiveRatingsArray } from "../../descriptive-ratings/api";
 const ADD_VARIABLE = "ADD_VARIABLE";
 const REMOVE_VARIABLE = "REMOVE_VARIABLE";
 const SET_VARIABLE = "SET_VARIABLE";
+const SET_VARIABLE_PROPERTY = "SET_VARIABLE_PROPERTY";
+const BATCH_SET_VARIABLE_PROPERTY = "BATCH_SET_VARIABLE_PROPERTY";
 const ADD_VARIABLE_SET = "ADD_VARIABLE_SUBSET";
 const REMOVE_VARIABLE_SET = "REMOVE_VARIABLE_SUBSET";
 const SET_VARIABLE_SET_MAP = "SET_VARIABLE_SUBSET_MAP";
@@ -41,6 +54,8 @@ interface VariableContextProps {
   addVariable: AddVariableFunction;
   removeVariable: RemoveVariableFunction;
   setVariable: SetVariableFunction;
+  setVariableProperty: SetVariablePropertyFunction;
+  batchSetVariableProperty: BatchSetVariablePropertyFunction;
   addVariableSet: AddVariableSetFunction;
   removeVariableSet: RemoveVariableSetFunction;
   getVariableName: (key: string) => string;
@@ -54,13 +69,15 @@ interface VariableContextProps {
 }
 
 type VariableAction =
-  | { type: typeof ADD_VARIABLE; variable: Variable, variableSetKey?: string }
-  | { type: typeof SET_VARIABLE; key: string; value: VariableValue }
-  | { type: typeof REMOVE_VARIABLE; key: string; documentId?: string }
+  | { type: typeof ADD_VARIABLE; variable: Variable, variableSetId?: string }
+  | { type: typeof SET_VARIABLE; id: string; value: VariableValue }
+  | { type: typeof SET_VARIABLE_PROPERTY; id: string; propertyPath: PathsToFields<Variable>; value: any }
+  | { type: typeof BATCH_SET_VARIABLE_PROPERTY; ids: string[]; propertyPath: PathsToFields<Variable>; value: any }
+  | { type: typeof REMOVE_VARIABLE; id: string; documentId?: string }
   | { type: typeof ADD_VARIABLE_SET; variableSet: VariableSet }
   | { type: typeof REMOVE_VARIABLE_SET; variableSet: VariableSet }
   | { type: typeof SET_VARIABLE_SET_MAP; payload: VariableSetMap }
-  | { type: typeof MARK_VARIABLES_HIDDEN; keys: string[]; bHidden: boolean };
+  | { type: typeof MARK_VARIABLES_HIDDEN; ids: string[]; bHidden: boolean };
 
 const initialState: VariableReducerState = {
   variableMap: new Map() as VariableMap,
@@ -73,9 +90,9 @@ function updateChildVariables(
   updatedVariables: VariableMap,
   variableSetMap: VariableSetMap
 ) {
-  if (!parentVariable || !parentVariable.metadata?.childVariableKeys) return;
+  if (!parentVariable || !parentVariable.metadata?.childVariableIds) return;
 
-  for (const childKey of parentVariable.metadata.childVariableKeys) {
+  for (const childKey of parentVariable.metadata.childVariableIds) {
     const childVariable = currentVariables.get(childKey);
     let bAutoCalculate = true;
     if (childVariable) {
@@ -121,16 +138,17 @@ function reducer(state: VariableReducerState, action: VariableAction): VariableR
   switch (action.type) {
     case ADD_VARIABLE: {
       const variableToAdd = action.variable;
-      if (action.variableSetKey) {
-        variableToAdd.variableSetKey = action.variableSetKey;
+      const variableToAddId = variableToAdd.idToken.id;
+      if (action.variableSetId) {
+        variableToAdd.variableSetId = action.variableSetId;
       }
 
       // Clone variableMap
       const newVariableMap = new Map(state.variableMap);
-      const bVariableAlreadyExists = newVariableMap.has(variableToAdd.key);
+      const bVariableAlreadyExists = newVariableMap.has(variableToAddId);
 
       if (!bVariableAlreadyExists) {
-        newVariableMap.set(variableToAdd.key, variableToAdd);
+        newVariableMap.set(variableToAddId, variableToAdd);
         return {
           ...state,
           variableMap: newVariableMap,
@@ -141,23 +159,27 @@ function reducer(state: VariableReducerState, action: VariableAction): VariableR
 
     case REMOVE_VARIABLE: {
       const variablesAfterDeletion = new Map(state.variableMap);
-      variablesAfterDeletion.delete(action.key);
+      variablesAfterDeletion.delete(action.id);
       return { ...state, variableMap: variablesAfterDeletion };
     }
 
     case SET_VARIABLE: {
-      const existingVariable = state.variableMap.get(action.key);
+      const existingVariable = state.variableMap.get(action.id);
       if (existingVariable) {
         const updatedVariable = { ...existingVariable, value: action.value } as Variable;
+        if (updatedVariable.metadata?.interpretationData && action.value) {
+          console.log("VariableContext::reducer()[SET_VARIABLE] - Setting interpretation for variable:", updatedVariable);
+          updatedVariable.metadata.interpretation = getVariableInterpretation(action.value.toString(), updatedVariable.metadata.interpretationData);
+        }
         logger.debug("VariableContext::reducer()[SET_VARIABLE] - Updated variable:", updatedVariable);
         const updatedVariableMap = new Map(state.variableMap) as VariableMap;
-        updatedVariableMap.set(action.key, updatedVariable);
-        if (updatedVariable.metadata?.associatedCompositeVariableKey) {
+        updatedVariableMap.set(action.id, updatedVariable);
+        if (updatedVariable.metadata?.associatedCompositeVariableId) {
           logger.debug("VariableContext::reducer()[SET_VARIABLE] - Updating associated composite variable");
-          const associatedCompositeVariable = updatedVariableMap.get(updatedVariable.metadata.associatedCompositeVariableKey);
+          const associatedCompositeVariable = updatedVariableMap.get(updatedVariable.metadata.associatedCompositeVariableId);
           if (associatedCompositeVariable) {
-            updateAssociatedSubvariableProperties({ variable: associatedCompositeVariable, subvariableKey: updatedVariable.key, subVariableValue: action.value });
-            updatedVariableMap.set(associatedCompositeVariable.key, associatedCompositeVariable);
+            updateAssociatedSubvariableProperties({ variable: associatedCompositeVariable, subvariableId: updatedVariable.idToken.id, subVariableValue: action.value });
+            updatedVariableMap.set(associatedCompositeVariable.idToken.id, associatedCompositeVariable);
           }
         }
 
@@ -165,17 +187,59 @@ function reducer(state: VariableReducerState, action: VariableAction): VariableR
 
         return { ...state, variableMap: updatedVariableMap };
       } else {
-        logger.error(`VariableContext::reducer()[SET_VARIABLE] - Variable with key ${action.key} not found`);
+        logger.error(`VariableContext::reducer()[SET_VARIABLE] - Variable with id ${action.id} not found`);
+        return state;
       }
+    }
+
+    case SET_VARIABLE_PROPERTY: {
+      const existingVariable = state.variableMap.get(action.id);
+      const propertyPath = action.propertyPath;
+
+      if (existingVariable) {
+        if (propertyPath) {
+          const updatedVariable = setValueByPath(existingVariable, propertyPath, action.value);
+          const updatedVariableMap = new Map(state.variableMap) as VariableMap;
+          updatedVariableMap.set(action.id, updatedVariable);
+          return { ...state, variableMap: updatedVariableMap };
+        } else {
+          logger.error(`VariableContext::reducer()[SET_VARIABLE_PROPERTY] - Property path not provided for variable with id ${action.id}`);
+        }
+      } else {
+        logger.error(`VariableContext::reducer()[SET_VARIABLE_PROPERTY] - Variable with id ${action.id} not found`);
+      }
+
+      return state;
+    }
+
+    case BATCH_SET_VARIABLE_PROPERTY: {
+      const updatedVariableMap = new Map(state.variableMap) as VariableMap;
+      action.ids.forEach((id) => {
+        const existingVariable = updatedVariableMap.get(id);
+        const propertyPath = action.propertyPath;
+
+        if (existingVariable) {
+          if (propertyPath) {
+            const updatedVariable = setValueByPath(existingVariable, propertyPath, action.value);
+            updatedVariableMap.set(id, updatedVariable);
+          } else {
+            logger.error(`VariableContext::reducer()[BATCH_SET_VARIABLE_PROPERTY] - Property path not provided for variable with id ${id}`);
+          }
+        } else {
+          logger.error(`VariableContext::reducer()[BATCH_SET_VARIABLE_PROPERTY] - Variable with id ${id} not found`);
+        }
+      });
+
+      return { ...state, variableMap: updatedVariableMap };
     }
 
     case ADD_VARIABLE_SET: {
       // `If` statement required because typescript is being a dick.
       if (action.type === ADD_VARIABLE_SET) {
         const newVariableSetMap = new Map(state.variableSetMap);
-        const bVariableSubsetAlreadyExists = newVariableSetMap.has(action.variableSet.key);
+        const bVariableSubsetAlreadyExists = newVariableSetMap.has(action.variableSet.idToken.id);
         if (!bVariableSubsetAlreadyExists) {
-          newVariableSetMap.set(action.variableSet.key, action.variableSet);
+          newVariableSetMap.set(action.variableSet.idToken.id, action.variableSet);
           return { ...state, variableSetMap: newVariableSetMap };
         }
       }
@@ -184,7 +248,7 @@ function reducer(state: VariableReducerState, action: VariableAction): VariableR
 
     case REMOVE_VARIABLE_SET: {
       const newVariableSetMap = new Map(state.variableSetMap);
-      newVariableSetMap.delete(action.variableSet.key);
+      newVariableSetMap.delete(action.variableSet.idToken.id);
       return { ...state, variableSetMap: newVariableSetMap };
     }
 
@@ -196,7 +260,7 @@ function reducer(state: VariableReducerState, action: VariableAction): VariableR
     }
 
     case MARK_VARIABLES_HIDDEN: {
-      const updatedVariableMap = markVariablesHiddenHelper(state.variableMap, action.keys, action.bHidden);
+      const updatedVariableMap = markVariablesHiddenHelper(state.variableMap, action.ids, action.bHidden);
       return { ...state, variableMap: updatedVariableMap };
     }
 
@@ -212,6 +276,8 @@ export const VariableContext = createContext<VariableContextProps>({
 
   addVariable: (() => {}) as AddVariableFunction,
   setVariable: (() => {}) as SetVariableFunction,
+  setVariableProperty: (() => {}) as SetVariablePropertyFunction,
+  batchSetVariableProperty: (() => {}) as BatchSetVariablePropertyFunction,
   removeVariable: (() => {}) as RemoveVariableFunction,
 
   addVariableSet: (async () => {}) as AddVariableSetFunction,
@@ -253,30 +319,38 @@ export const VariableProvider = ({ children }: VariableProviderProps) => {
     variableMap: state.variableMap,
     variableSetMap: state.variableSetMap,
 
-    addVariable: ((variable: Variable, variableSetKey?: string) => {
+    addVariable: ((variable: Variable, variableSetId?: string) => {
       if (!variable) {
         throw new Error("VariableContext::addVariable - Missing 'variable'.");
       }
-      dispatch({ type: ADD_VARIABLE, variable, variableSetKey });
+      dispatch({ type: ADD_VARIABLE, variable, variableSetId });
     }) as AddVariableFunction,
 
-    setVariable: ((key: string, value: VariableValue) => {
-      dispatch({ type: SET_VARIABLE, key, value });
+    setVariable: ((id: string, value: VariableValue) => {
+      dispatch({ type: SET_VARIABLE, id, value });
     }) as SetVariableFunction,
 
-    removeVariable: ((key: string, documentId?: string) => {
-      dispatch({ type: REMOVE_VARIABLE, key, documentId });
+    setVariableProperty: ((id: string, propertyPath: PathsToFields<Variable>, value: any) => {
+      dispatch({ type: SET_VARIABLE_PROPERTY, id, propertyPath, value });
+    }) as SetVariablePropertyFunction,
+
+    batchSetVariableProperty: ((ids: string[], propertyPath: PathsToFields<Variable>, value: any) => {
+      dispatch({ type: BATCH_SET_VARIABLE_PROPERTY, ids, propertyPath, value });
+    }) as BatchSetVariablePropertyFunction,
+
+    removeVariable: ((id: string, documentId?: string) => {
+      dispatch({ type: REMOVE_VARIABLE, id, documentId });
     }) as RemoveVariableFunction,
 
     addVariableSet: (async (variableSet: VariableSet): Promise<void> => {
       logger.debug("VariableContext::addVariableSet() - Adding variable set:", variableSet);
-      const bExistingSet = state.variableSetMap.has(variableSet.key);
+      const bExistingSet = state.variableSetMap.has(variableSet.idToken.id);
       return new Promise(async (resolve, reject) => {
         if (!bExistingSet) {
           try {
             const variablesToAdd = await fetchVariablesFromSet(variableSet);
-            const pendingVariables = new Set(variablesToAdd.map(v => v.key));
-            variablesToAdd.forEach((variable) => value.addVariable(variable, variableSet.key));
+            const pendingVariableIds = new Set(variablesToAdd.map(v => v.idToken.id));
+            variablesToAdd.forEach((variable) => value.addVariable(variable, variableSet.idToken.id));
 
             if (variableSet.metadata?.descriptiveRatingId) {
               const descriptiveRatings = await fetchDescriptiveRatingsArray(variableSet.metadata?.descriptiveRatingId);
@@ -297,17 +371,17 @@ export const VariableProvider = ({ children }: VariableProviderProps) => {
                 return;
               }
 
-              if (Array.from(pendingVariables).every(key => stateRef.current.variableMap.has(key))) {
-                logger.debug("VariableContext::checkAllVariablesAdded() - All variables added. Printing added variables from state.")
-                variableSet.variableKeys.all.forEach((key) => {
-                  const variable = stateRef.current.variableMap.get(key);
+              if (Array.from(pendingVariableIds).every(variableId => stateRef.current.variableMap.has(variableId))) {
+                logger.debug("VariableContext::addVariableSet::checkAllVariablesAdded() - All variables added. Printing added variables from state.")
+                variableSet.variableIds.all.forEach((id) => {
+                  const variable = stateRef.current.variableMap.get(id);
                   if (!variable) {
-                    logger.error(`VariableContext::checkAllVariablesAdded() - Variable with key ${key} not found in state.`);
+                    logger.error(`VariableContext::addVariableSet::checkAllVariablesAdded() - Variable with id ${id} not found in state.`);
                   }
                 });
                 resolve(); // Resolve the promise as all variables are added
               } else {
-                logger.debug("VariableContext::checkAllVariablesAdded() - Not all variables added. Checking again in 50ms.");
+                logger.debug("VariableContext::addVariableSet::checkAllVariablesAdded() - Not all variables added. Checking again in 50ms.");
                 setTimeout(checkAllVariablesAdded, 50); // Recheck after a delay // TODO: Use of setTimeout is not ideal may want to consider moving to an event-based approach (e.g., maintain a list of pending variables and remove them as they are added).
                 checkAttempts++;
               }
@@ -315,7 +389,7 @@ export const VariableProvider = ({ children }: VariableProviderProps) => {
 
             checkAllVariablesAdded();
           } catch (error) {
-            logger.error("VariableContext::addVariableSubset() - Error fetching variable subset:", error);
+            logger.error("VariableContext::addVariableSet() - Error fetching variable subset:", error);
             reject();
           }
         }
@@ -327,32 +401,32 @@ export const VariableProvider = ({ children }: VariableProviderProps) => {
 
     removeVariableSet: ((variableSet: VariableSet) => {
       // Remove all variables associated with the variableSubset
-      variableSet.variableKeys?.all.forEach((variableKey) => {
-        value.removeVariable(variableKey);
+      variableSet.variableIds?.all.forEach((variableId) => {
+        value.removeVariable(variableId);
       });
 
       dispatch({ type: REMOVE_VARIABLE_SET, variableSet: variableSet });
       }) as RemoveVariableSetFunction,
 
-    getVariableName: ((key: string) => {
-      const variable = state.variableMap.get(key);
+    getVariableName: ((id: string) => {
+      const variable = state.variableMap.get(id);
       if (variable) {
         return variable.fullName;
       } else {
-        logger.error(`VariableContext::getVariableName() - Variable with key ${key} not found`);
+        logger.error(`VariableContext::getVariableName() - Variable with id ${id} not found`);
       }
     }) as GetVariableNameFunction,
 
     getRelatedVariablesBySet: ((variableSet: VariableSet, bIncludeChlidVariables?: boolean, bIncludeHiddenVariables?: boolean): Variable[] => {
       let variables: Variable[] = [];
-      if (variableSet.variableKeys) {
-        variableSet.variableKeys.all.forEach((key) => {
-          const variable = state.variableMap.get(key);
+      if (variableSet.variableIds) {
+        variableSet.variableIds.all.forEach((id) => {
+          const variable = state.variableMap.get(id);
           if (variable) {
             variables.push(variable);
-            if (bIncludeChlidVariables && variable.metadata?.childVariableKeys) {
-              variable.metadata.childVariableKeys.forEach((childKey) => {
-                const childVariable = state.variableMap.get(childKey);
+            if (bIncludeChlidVariables && variable.metadata?.childVariableIds) {
+              variable.metadata.childVariableIds.forEach((childId) => {
+                const childVariable = state.variableMap.get(childId);
                 const bHiddenChildVariable = childVariable?.metadata?.bHidden;
                 if (childVariable) {
                   if (!bHiddenChildVariable) {
@@ -397,18 +471,18 @@ export const VariableProvider = ({ children }: VariableProviderProps) => {
       return getChildVariablesHelper(parentVariable, state.variableMap);
     }) as GetChildVariablesFunction,
 
-    markVariablesHidden: ((keys: string[], bHidden: boolean) => {
-      dispatch({ type: MARK_VARIABLES_HIDDEN, keys, bHidden });
+    markVariablesHidden: ((ids: string[], bHidden: boolean) => {
+      value.batchSetVariableProperty(ids, "metadata.bHidden", bHidden);
     }) as MarkVariablesHiddenFunction,
 
-    getVariablesArray(variableKeys?: string[]): Variable[] {
-      if (variableKeys) {
-        return variableKeys.map((key) => {
-          const variable = state.variableMap.get(key);
+    getVariablesArray(variableIds?: string[]): Variable[] {
+      if (variableIds) {
+        return variableIds.map((id) => {
+          const variable = state.variableMap.get(id);
           if (!variable) {
-            logger.error(`VariableContext::getVariablesArray() - Variable with key ${key} not found`);
+            throw Error(`VariableContext::getVariablesArray() - Variable with id ${id} not found`);
           }
-          return variable!;
+          return variable;
         });
       } else {
         return Array.from(state.variableMap.values());

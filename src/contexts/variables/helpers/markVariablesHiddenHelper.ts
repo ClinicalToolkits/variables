@@ -1,13 +1,12 @@
 import { VariableMap } from "../../../types";
 
-export const markVariablesHiddenHelper = (variableMap: VariableMap, keys: string[], bHidden: boolean): VariableMap => {
+export const markVariablesHiddenHelper = (variableMap: VariableMap, ids: string[], bHidden: boolean): VariableMap => {
   const updatedVariableMap = new Map(variableMap);
-
-  keys.forEach((key) => {
-    const variable = updatedVariableMap.get(key);
+  ids.forEach((id) => {
+    const variable = updatedVariableMap.get(id);
     if (variable) {
       const updatedVariable = { ...variable, metadata: { ...variable.metadata, bHidden } };
-      updatedVariableMap.set(key, updatedVariable);
+      updatedVariableMap.set(id, updatedVariable);
     }
   });
 
