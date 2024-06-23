@@ -10,8 +10,8 @@ import {
   GetChildVariablesFunction,
   GetVariableSubgroupByNameFunction,
 } from "./VariableContextTypes";
-import { markVariablesHiddenHelper, getClientAgeHelper } from "./helpers";
-import {  Tag, DataType, PathsToFields, setValueByPath } from "@clinicaltoolkits/type-definitions";
+import { getClientAgeHelper } from "./helpers";
+import {  Tag, DataType, PathsToFields, setValueByPath, Visibility, isVisible } from "@clinicaltoolkits/type-definitions";
 import { logger } from "@clinicaltoolkits/utility-functions";
 import { getChildVariablesHelper } from "./helpers/getChildVariablesHelper";
 import { fetchVariablesFromSet } from "../../api";
@@ -40,7 +40,6 @@ const BATCH_SET_VARIABLE_PROPERTY = "BATCH_SET_VARIABLE_PROPERTY";
 const ADD_VARIABLE_SET = "ADD_VARIABLE_SUBSET";
 const REMOVE_VARIABLE_SET = "REMOVE_VARIABLE_SUBSET";
 const SET_VARIABLE_SET_MAP = "SET_VARIABLE_SUBSET_MAP";
-const MARK_VARIABLES_HIDDEN = "MARK_VARIABLES_HIDDEN";
 
 interface VariableReducerState {
   variableMap: VariableMap;
@@ -76,8 +75,7 @@ type VariableAction =
   | { type: typeof REMOVE_VARIABLE; id: string; documentId?: string }
   | { type: typeof ADD_VARIABLE_SET; variableSet: VariableSet }
   | { type: typeof REMOVE_VARIABLE_SET; variableSet: VariableSet }
-  | { type: typeof SET_VARIABLE_SET_MAP; payload: VariableSetMap }
-  | { type: typeof MARK_VARIABLES_HIDDEN; ids: string[]; bHidden: boolean };
+  | { type: typeof SET_VARIABLE_SET_MAP; payload: VariableSetMap };
 
 const initialState: VariableReducerState = {
   variableMap: new Map() as VariableMap,
@@ -217,8 +215,9 @@ function reducer(state: VariableReducerState, action: VariableAction): VariableR
       action.ids.forEach((id) => {
         const existingVariable = updatedVariableMap.get(id);
         const propertyPath = action.propertyPath;
+        const bUpdateValue = existingVariable?.value !== action.value;
 
-        if (existingVariable) {
+        if (existingVariable && bUpdateValue) {
           if (propertyPath) {
             const updatedVariable = setValueByPath(existingVariable, propertyPath, action.value);
             updatedVariableMap.set(id, updatedVariable);
@@ -257,11 +256,6 @@ function reducer(state: VariableReducerState, action: VariableAction): VariableR
         ...state,
         variableSetMap: action.payload,
       };
-    }
-
-    case MARK_VARIABLES_HIDDEN: {
-      const updatedVariableMap = markVariablesHiddenHelper(state.variableMap, action.ids, action.bHidden);
-      return { ...state, variableMap: updatedVariableMap };
     }
 
     default: {
@@ -427,9 +421,9 @@ export const VariableProvider = ({ children }: VariableProviderProps) => {
             if (bIncludeChlidVariables && variable.metadata?.childVariableIds) {
               variable.metadata.childVariableIds.forEach((childId) => {
                 const childVariable = state.variableMap.get(childId);
-                const bHiddenChildVariable = childVariable?.metadata?.bHidden;
+                const bVisibleChildVariable = isVisible(childVariable?.metadata?.visibility);
                 if (childVariable) {
-                  if (!bHiddenChildVariable) {
+                  if (bVisibleChildVariable) {
                     variables.push(childVariable);
                   } else if (bIncludeHiddenVariables) {
                     variables.push(childVariable);
@@ -472,7 +466,8 @@ export const VariableProvider = ({ children }: VariableProviderProps) => {
     }) as GetChildVariablesFunction,
 
     markVariablesHidden: ((ids: string[], bHidden: boolean) => {
-      value.batchSetVariableProperty(ids, "metadata.bHidden", bHidden);
+      const updatedVisibility = bHidden ? Visibility.HIDDEN : Visibility.VISIBLE;
+      value.batchSetVariableProperty(ids, "metadata.visibility", updatedVisibility);
     }) as MarkVariablesHiddenFunction,
 
     getVariablesArray(variableIds?: string[]): Variable[] {

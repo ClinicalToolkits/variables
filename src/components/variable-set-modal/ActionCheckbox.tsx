@@ -51,7 +51,8 @@ export const ActionCheckbox: React.FC<ActionCheckboxProps> = ({ id }) => {
   const bChecked = typeof variable.value === 'boolean' ? variable.value : false;
 
   const handleChange = () => {
-    setValueFromOptionsMenuVariable(!bChecked, variable, batchSetVariableProperty);
+    console.log("ActionCheckbox handleChange", id, bChecked);
+    setValueFromOptionsMenuVariable({ value: !bChecked, optionsMenuVariable: variable, batchSetVariableProperty});
     setVariable(id, !bChecked);
   };
 
@@ -88,15 +89,12 @@ export const ActionCheckboxes: React.FC<ActionCheckboxesProps> = ({ inIds, inOwn
     );
   });
 
-  useMemo(() => {
+  useEffect(() => {
     if (inOwningId !== owningId) {
       setOwningId(inOwningId);
       setShowAll(false);
-      setValuesFromOptionsMenuVariables(actionCheckboxVariables, batchSetVariableProperty);
     }
   }, [inOwningId]);
-
-
 
   return (
     <Stack gap={rem("5px")}>
@@ -111,13 +109,18 @@ export const ActionCheckboxes: React.FC<ActionCheckboxesProps> = ({ inIds, inOwn
   );
 };
 
-export const setValueFromOptionsMenuVariable = (value: any, optionsMenuVariable: Variable, batchSetVariableProperty: (ids: string[], propertyPath: PathsToFields<Variable>, value: any) => void): void => {
+interface SetValueFromOptionsMenuVariableProps {
+  value: any;
+  optionsMenuVariable: Variable;
+  batchSetVariableProperty: (ids: string[], propertyPath: PathsToFields<Variable>, value: any) => void;
+}
+
+export const setValueFromOptionsMenuVariable = ({ value, optionsMenuVariable, batchSetVariableProperty }: SetValueFromOptionsMenuVariableProps): void => {
   if (value !== undefined && optionsMenuVariable.metadata?.actionParams?.ids) {
     const { ids, propertyPath, name } = optionsMenuVariable.metadata.actionParams;
     switch (name) {
       case 'batchSetVariableProperty': {
-        if (propertyPath === "metadata.bHidden") value = !value; // TODO: This is a hack to make the hidden property work as expected, should likely change bHidden to bVisible
-        
+        if (propertyPath === "metadata.visibility" && typeof value === "boolean") value = value ? 1 : 0;
         if (ids) batchSetVariableProperty(ids, propertyPath, value);
         break;
       }
@@ -127,9 +130,13 @@ export const setValueFromOptionsMenuVariable = (value: any, optionsMenuVariable:
   }
 };
 
-export const setValuesFromOptionsMenuVariables = (optionsMenuVariables: Variable[], batchSetVariableProperty: (ids: string[], propertyPath: PathsToFields<Variable>, value: any) => void): void => {
+interface SetValuesFromOptionsMenuVariablesProps extends Omit<SetValueFromOptionsMenuVariableProps, 'value' | 'optionsMenuVariable'> {
+  optionsMenuVariables: Variable[];
+}
+
+export const setValuesFromOptionsMenuVariables = ({ optionsMenuVariables, batchSetVariableProperty }: SetValuesFromOptionsMenuVariablesProps): void => {
   optionsMenuVariables.forEach((optionsMenuVariable) => {
-    const value = optionsMenuVariable.value || optionsMenuVariable.metadata?.initialValue;
-    setValueFromOptionsMenuVariable(value, optionsMenuVariable, batchSetVariableProperty);
+    const value = optionsMenuVariable.value;
+    setValueFromOptionsMenuVariable({ value, optionsMenuVariable, batchSetVariableProperty });
   });
 };

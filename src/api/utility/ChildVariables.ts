@@ -39,7 +39,7 @@ export function createPercentileRankVariable(parentVariable: Variable): Variable
     dataType: DataType.PERCENTILE_RANK,
     metadata: {
       label: `${parentVariable.metadata?.label}`,
-      bHidden: parentVariable.metadata?.bHidePercentileRank,
+      visibility: parentVariable.metadata?.percentileRankVisibility,
       bOptional: parentVariable.metadata?.bOptional,
       bNormallyDistributed: parentVariable.metadata?.bNormallyDistributed,
       properties: {
@@ -71,7 +71,7 @@ export function createPercentileRangeVariable(parentVariable: Variable): Variabl
     dataType: DataType.PERCENTILE_RANGE,
     metadata: {
       label: `${parentVariable.metadata?.label}`,
-      bHidden: parentVariable.metadata?.bHidePercentileRange,
+      visibility: parentVariable.metadata?.percentileRangeVisibility,
       bOptional: parentVariable.metadata?.bOptional,
       properties: {
         childVariable: {
@@ -103,7 +103,7 @@ export function createDescriptorVariable(parentVariable: Variable): Variable {
     dataType: DataType.DESCRIPTOR,
     metadata: {
       label: `${parentVariable.metadata?.label}`,
-      bHidden: parentVariable.metadata?.bHideDescriptiveRating,
+      visibility: parentVariable.metadata?.descriptiveRatingVisibility,
       bOptional: parentVariable.metadata?.bOptional,
       properties: {
         childVariable: {
@@ -135,7 +135,7 @@ export function createPreviousScoreVariable(parentVariable: Variable): Variable 
     dataType: parentVariable.dataType,
     metadata: {
       label: `${parentVariable.metadata?.label}`,
-      bHidden: parentVariable.metadata?.bHidePreviousScore,
+      visibility: parentVariable.metadata?.previousScoreVisibility,
       bOptional: parentVariable.metadata?.bOptional,
       properties: {
         childVariable: {

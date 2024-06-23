@@ -111,14 +111,14 @@ export const getVariableObjectConfig = (tagsComboboxData: ComboboxData[], entiti
     { id: "10", propertyPath: "metadata.associatedCompositeVariableId", displayName: "Associated Composite Variable", type: "select",  metadata: { options: variablesComboboxData } },
     { id: "11", propertyPath: "metadata.associatedSubvariableIds", displayName: "Associated Subvariables", type: "multiSelect",  metadata: { options: variablesComboboxData } },
     { id: "12", propertyPath: "metadata.bNormallyDistributed", displayName: "Normally Distributed", type: "checkbox" },
-    { id: "13", propertyPath: "metadata.bHidden", displayName: "Hidden", type: "checkbox" },
+    { id: "13", propertyPath: "metadata.visibility", displayName: "Visibility", type: "checkbox" },
     { id: "14", propertyPath: "metadata.bOptional", displayName: "Optional", type: "checkbox" },
     { id: "15", propertyPath: "metadata.bCreatePercentileRank", displayName: "Create Percentile Rank", type: "checkbox" },
     { id: "16", propertyPath: "metadata.bAutoCalculatePercentileRank", displayName: "Auto Calculate Percentile Rank", type: "checkbox" },
-    { id: "17", propertyPath: "metadata.bHidePercentileRank", displayName: "Hide Percentile Rank", type: "checkbox" },
+    { id: "17", propertyPath: "metadata.percentileRankVisibility", displayName: "Percentile Rank Visibility", type: "checkbox" },
     { id: "18", propertyPath: "metadata.bCreateDescriptiveRating", displayName: "Create Descriptive Rating", type: "checkbox" },
     { id: "19", propertyPath: "metadata.bAutoCalculateDescriptiveRating", displayName: "Auto Calculate Descriptive Rating", type: "checkbox" },
-    { id: "20", propertyPath: "metadata.bHideDescriptiveRating", displayName: "Hide Descriptive Rating", type: "checkbox" },
+    { id: "20", propertyPath: "metadata.descriptiveRatingVisibility", displayName: "Descriptive Rating Visibility", type: "checkbox" },
     { id: "21", propertyPath: "metadata.bIncludeInDynamicTable", displayName: "Include In Dynamic Table", type: "checkbox" },
   ]
 );
@@ -195,7 +195,6 @@ const variable = createDefaultObject(VariableClass);
   orderWithinSet: 0,
   metadata: {
     bNormallyDistributed: false,
-    bHidden: false,
     bCreatePercentileRank: false,
     bHidePercentileRank: false,
     bAutoCalculatePercentileRank: false,

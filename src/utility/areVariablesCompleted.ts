@@ -2,21 +2,21 @@ import { isEmptyValue } from "@clinicaltoolkits/utility-functions";
 import { Variable, VariableMap, VariableSet } from "../types";
 import { shouldDisplayVariable, shouldDisplayVariables } from "../contexts";
 
-export interface IsVariableSetCompletedParams {
+export interface AreVariableSetCompletedParams {
   variables?: Variable[];
 }
 
-export const isVariableSetCompleted = ({ variables }: IsVariableSetCompletedParams): boolean => {
-  let bSectionCompleted = true;
-
-  if (variables) {
-    variables.forEach((variable) => {
-      const { value } = variable;
-      if (shouldDisplayVariable(variable) && (isEmptyValue(value) || value === "-")) {
-        bSectionCompleted = false;
-      }
-    });
-  }
+  export const areVariablesCompleted = ({ variables }: AreVariableSetCompletedParams): boolean => {
+    let bSectionCompleted = true;
+  
+    if (variables) {
+      variables.forEach((variable) => {
+        const { value } = variable;
+        if (shouldDisplayVariable(variable) && (isEmptyValue(value) || value === "-")) {
+          bSectionCompleted = false;
+        }
+      });
+    }
 
 
 

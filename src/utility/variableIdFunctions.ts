@@ -29,6 +29,10 @@ const appendPrefixToVariablesReplacement = (prefix: string, enclosure?: [string,
 export const appendPrefixToVariablesRule = (prefix: string, enclosure?: [string, string]): RegexRule => ({
   pattern: VARIABLE_ID_REGEX_PATTERN(enclosure),
   replacement: appendPrefixToVariablesReplacement(prefix, enclosure),
+  shouldApply: (args) => args?.[0]?.inPrefixToApply !== undefined,
+  metadata: {
+    bApplyToIfStatement: true,
+  }
 });
 
 const removePrefixesFromVariablesReplacement = (enclosure?: [string, string]) => createReplacementFunction({
@@ -47,6 +51,10 @@ const removePrefixesFromVariablesReplacement = (enclosure?: [string, string]) =>
 export const removePrefixesFromVariablesRule = (enclosure?: [string, string]): RegexRule => ({
   pattern: VARIABLE_ID_REGEX_PATTERN(enclosure),
   replacement: removePrefixesFromVariablesReplacement(enclosure),
+  shouldApply: (args) => args?.[0]?.inPrefixToRemove !== undefined,
+  metadata: {
+    bApplyToIfStatement: true,
+  }
 });
 
 const appendSuffixToVariablesReplacement = (suffix: string, enclosure?: [string, string]) => createReplacementFunction({
@@ -62,6 +70,10 @@ const appendSuffixToVariablesReplacement = (suffix: string, enclosure?: [string,
 export const appendSuffixToVariablesRule = (suffix: string, enclosure?: [string, string]): RegexRule => ({
   pattern: VARIABLE_ID_REGEX_PATTERN(enclosure),
   replacement: appendSuffixToVariablesReplacement(suffix, enclosure),
+  shouldApply: (args) => args?.[0]?.inSuffixToApply !== undefined,
+  metadata: {
+    bApplyToIfStatement: true,
+  }
 });
 
 const removeSuffixFromVariablesReplacement = (enclosure?: [string, string]) => createReplacementFunction({
@@ -77,6 +89,10 @@ const removeSuffixFromVariablesReplacement = (enclosure?: [string, string]) => c
 export const removeSuffixFromVariablesRule = (enclosure?: [string, string]): RegexRule => ({
   pattern: VARIABLE_ID_REGEX_PATTERN(enclosure),
   replacement: removeSuffixFromVariablesReplacement(enclosure),
+  shouldApply: (args) => args?.[0]?.inSuffixToRemove !== undefined,
+  metadata: {
+    bApplyToIfStatement: true,
+  }
 });
 
 const replaceUUIDEnclosureFunction = (currentEnclosure: [string, string], replacementEnclosure: [string, string]) => createReplacementFunction({
@@ -89,7 +105,6 @@ export const replaceUUIDEnclosureRule = (currentEnclosure: [string, string], rep
   pattern: VARIABLE_ID_REGEX_PATTERN(currentEnclosure),
   replacement: replaceUUIDEnclosureFunction(currentEnclosure, replacementEnclosure),
 });
-
 
 const removeUUIDEnclosureFunction = (enclosure: [string, string]) => createReplacementFunction({
   processData: (matches) => {

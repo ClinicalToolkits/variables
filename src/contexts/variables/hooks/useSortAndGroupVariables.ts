@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useVariableContext } from "../VariableContext";
 import { getSubgroupNameForVariable, getVariableSubgroupsToDisplay } from "../utility";
 import { VariableMap, VariableSet, Variable } from "../../../types";
+import { isHidden } from "@clinicaltoolkits/type-definitions";
 
 interface UseSortAndGroupVariablesProps {
   variableGroups: Record<string, VariableMap>;
@@ -52,13 +53,13 @@ export const useSortAndGroupVariables = (
       groupedAndSorted[groupName] = sortedMap;
     });
 
-    // Remove empty groups or groups where all variables have metadata.bHidden set to true
+    // Remove empty groups or groups where all variables have metadata.visibility === Visibility.HIDDEN
     Object.keys(groupedAndSorted).forEach(groupName => {
       if (groupedAndSorted[groupName].size === 0) {
         delete groupedAndSorted[groupName];
       } else {
-        const allHidden = Array.from(groupedAndSorted[groupName].values()).every(variable => variable.metadata?.bHidden);
-        if (allHidden) {
+        const bAllVariablesHidden = Array.from(groupedAndSorted[groupName].values()).every(variable => isHidden(variable.metadata?.visibility));
+        if (bAllVariablesHidden) {
           delete groupedAndSorted[groupName];
         }
       }

@@ -1,5 +1,6 @@
+import { isHidden } from "@clinicaltoolkits/type-definitions";
 import { Variable } from "../../../types";
 
 export const isVariableHidden = (variable: Variable): boolean => {
-  return variable.metadata?.bHidden || false;
+  return isHidden(variable.metadata?.visibility);
 };

@@ -27,7 +27,7 @@ export interface VariableSetModalProps {
  * @param titleChildren - Array of React nodes to display in the title section of the modal.
  */
 export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet, headingChildren = [], opened, onClose, headingProps, inputSize = "sm", classNames }) => {
-  const { variableMap, setVariable, getVariablesArray } = useVariableContext();
+  const { variableMap, setVariable } = useVariableContext();
   const { variableGroups } = useSortAndGroupVariables(variableSet);
   console.log("variableSet: ", variableSet);
   console.log("variableGroups: ", variableGroups);

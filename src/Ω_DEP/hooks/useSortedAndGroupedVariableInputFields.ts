@@ -1,4 +1,5 @@
 
+/*
 import { InputField, InputFieldClassNames, InputFieldMap } from "@clinicaltoolkits/universal-react-components";
 import { DataType } from "@clinicaltoolkits/type-definitions";
 import { useMemo } from "react";
@@ -140,3 +141,4 @@ const getClassnames = (type: string): InputFieldClassNames => {
       };
   }
 };
+*/

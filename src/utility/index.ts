@@ -6,5 +6,5 @@ export * from "./generateTableData";
 export * from "./getVariableId";
 export * from "./variableIdFunctions";
 export * from "./getVariableValueAsString";
-export * from "./isVariableSetComplete";
+export * from "./areVariablesCompleted";
 export * from "./optionsMenuVariables";

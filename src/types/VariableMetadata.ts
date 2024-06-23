@@ -1,4 +1,4 @@
-import { Age, AgeRangeString, ComboboxData, RowType } from "@clinicaltoolkits/type-definitions";
+import { Age, AgeRangeString, ComboboxData, RowType, Visibility } from "@clinicaltoolkits/type-definitions";
 import { DescriptiveRating } from "../descriptive-ratings/types/DescriptiveRating";
 import { VariableIdToken, VariableMap } from "./Variable";
 import { evaluateLogicalExpression, parseLogicalExpression } from "@clinicaltoolkits/utility-functions";
@@ -26,17 +26,17 @@ export interface DBVariableMetadata {
   interpretationData?: Omit<InterpretationData, "bInterpretationDataType"> | null;
   descriptiveRatingId?: string;
   bNormallyDistributed?: boolean;
-  bHidden?: boolean;
+  visibility?: Visibility;
   bCreatePercentileRank?: boolean;
   bAutoCalculatePercentileRank?: boolean;
-  bHidePercentileRank?: boolean;
+  percentileRankVisibility?: Visibility;
   bCreatePercentileRange?: boolean;
-  bHidePercentileRange?: boolean;
+  percentileRangeVisibility?: Visibility;
   bCreateDescriptiveRating?: boolean;
   bAutoCalculateDescriptiveRating?: boolean;
-  bHideDescriptiveRating?: boolean;
+  descriptiveRatingVisibility?: Visibility;
   bCreatePreviousScore?: boolean;
-  bHidePreviousScore?: boolean;
+  previousScoreVisibility?: Visibility;
   associatedCompositeVariableId?: string;
   associatedSubvariableIds?: string[];
   bOptional?: boolean;
@@ -56,13 +56,13 @@ export const emptyVariableMetadata: VariableMetadata = {
   description: "",
   descriptiveRatingId: "",
   bNormallyDistributed: true,
-  bHidden: false,
+  visibility: Visibility.VISIBLE,
   bCreatePercentileRank: false,
   bAutoCalculatePercentileRank: false,
-  bHidePercentileRank: false,
+  percentileRankVisibility: Visibility.VISIBLE,
   bCreateDescriptiveRating: false,
   bAutoCalculateDescriptiveRating: false,
-  bHideDescriptiveRating: false,
+  descriptiveRatingVisibility: Visibility.VISIBLE,
   associatedCompositeVariableId: "",
   associatedSubvariableIds: [],
   bOptional: false,
@@ -75,7 +75,6 @@ export const emptyVariableMetadata: VariableMetadata = {
  * The metadata of a variable.
  * @param {string} label - The label of the variable.
  * @param {string[]} childVariableKeys - The unique strings for any dependent child variables of the parent variable (e.g., strings for the descriptor/percentile variables that are calculated based on the parent).
- * @param {boolean} bHidden - Whether the variable is hidden or not.
  * @param {VariableMetadataProperties} properties - Holds various properties for the variable that helps programs determine how it should be used.
  */
 export interface VariableMetadata extends Omit<DBVariableMetadata, "associatedCompositeVariableId" | "interpretationData"> {

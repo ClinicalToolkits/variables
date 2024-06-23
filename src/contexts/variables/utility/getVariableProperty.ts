@@ -87,7 +87,10 @@ export function getVariablePropertyFromKeyPath(variableMap: VariableMap, keyPath
     } else {
       const basePropertyPath = 'metadata.associatedSubvariableProperties'
       // find the number contained inside the `[]` in the property path and return it as a number
-      const indexToReference = parseInt(propertyPath.match(/\[(\d+)\]/)?.[1] ?? '', 10);
+      const indexMatch = propertyPath.match(/\[(\d+)\]/);
+      const indexString = indexMatch ? indexMatch[1] : ''; // Provide a default value or handle differently
+      const indexToReference = parseInt(indexString, 10);
+
       const associatedSubvariableProperties: AssociatedSubvariableProperties[] = getValueByPath(variable, basePropertyPath);
       
       if (Array.isArray(associatedSubvariableProperties)) {

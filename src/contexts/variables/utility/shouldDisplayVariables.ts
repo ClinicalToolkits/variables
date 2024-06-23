@@ -1,8 +1,9 @@
+import { Visibility, isVisible } from "@clinicaltoolkits/type-definitions";
 import { VariableMap, Variable } from "../../../types";
 
-export const shouldDisplayVariables = (variableKeys: string[], variableMap: VariableMap) => {
-  return variableKeys.every((variableKey) => {
-    const variable = variableMap.get(variableKey);
+export const shouldDisplayVariables = (variableIds: string[], variableMap: VariableMap) => {
+  return variableIds.every((variableId) => {
+    const variable = variableMap.get(variableId);
     return variable ? shouldDisplayVariable(variable) : false;
   });
 };
@@ -19,9 +20,8 @@ export const shouldDisplayVariables = (variableKeys: string[], variableMap: Vari
 };*/
 
 export const shouldDisplayVariable = (variable: Variable) => {
-  const bShouldDisplay = !variable.metadata?.bHidden ?? true;
+  const bShouldDisplay = isVisible(variable.metadata?.visibility);
   return bShouldDisplay;
-
 };
 
 /*export const shouldDisplayVariable = (variable: Variable, section?: Section) => {
