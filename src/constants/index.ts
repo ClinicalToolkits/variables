@@ -1,1 +1,1 @@
-export * from "./VARIABLE_ID_PATTERN";
+export * from "./ALLOWED_VARIABLE_PROPERTIES";

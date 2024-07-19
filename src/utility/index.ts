@@ -8,3 +8,4 @@ export * from "./variableIdFunctions";
 export * from "./getVariableValueAsString";
 export * from "./areVariablesCompleted";
 export * from "./optionsMenuVariables";
+export * from "./getVariableContent";

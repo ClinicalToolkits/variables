@@ -15,6 +15,7 @@ export const handleAutoVariableUpdates =(updatedVariableId: string, updatedValue
         if (pronounIds && typeof updatedValue === "string") handleAutoPronounUpdates(updatedValue, pronounIds, variableMap, setVariable);
         break;
       }
+      case getDemographicsId(DEMOGRAPHICS.ASSESSMENT_END_DATE):
       case getDemographicsId(DEMOGRAPHICS.DATE_OF_BIRTH):
         handleAutoAssessmentAgeUpdates(updatedVariableId, updatedValue, variableMap, setVariable);
         break;

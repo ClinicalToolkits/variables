@@ -1,8 +1,8 @@
-import { Age, AgeRangeString, ComboboxData, RowType, Visibility } from "@clinicaltoolkits/type-definitions";
+import { Age, AgeRangeString, PathsToFields, RowType, Visibility } from "@clinicaltoolkits/type-definitions";
 import { DescriptiveRating } from "../descriptive-ratings/types/DescriptiveRating";
-import { VariableIdToken, VariableMap } from "./Variable";
-import { evaluateLogicalExpression, parseLogicalExpression } from "@clinicaltoolkits/utility-functions";
-import { getVariablePropertyFromKeyPath } from "../contexts";
+import { ContentBlock, getTextFromContentBlock } from "@clinicaltoolkits/content-blocks";
+import { Variable } from "./Variable";
+
 // TODO: A large swath of these properties are not being used. We should consider removing them.
 export interface VersionProperties {
   ageCutoff?: {
@@ -23,7 +23,7 @@ export interface VariableMetadataProperties {
 
 export interface DBVariableMetadata {
   description?: string;
-  interpretationData?: Omit<InterpretationData, "bInterpretationDataType"> | null;
+  interpretationBlock?: ContentBlock | null;
   descriptiveRatingId?: string;
   bNormallyDistributed?: boolean;
   visibility?: Visibility;
@@ -77,11 +77,10 @@ export const emptyVariableMetadata: VariableMetadata = {
  * @param {string[]} childVariableKeys - The unique strings for any dependent child variables of the parent variable (e.g., strings for the descriptor/percentile variables that are calculated based on the parent).
  * @param {VariableMetadataProperties} properties - Holds various properties for the variable that helps programs determine how it should be used.
  */
-export interface VariableMetadata extends Omit<DBVariableMetadata, "associatedCompositeVariableId" | "interpretationData"> {
+export interface VariableMetadata extends Omit<DBVariableMetadata, "associatedCompositeVariableId"> {
   label?: string;
   childVariableIds?: string[];
   interpretation?: string;
-  interpretationData?: InterpretationData;
   descriptiveRatings?: DescriptiveRating[];
   properties?: VariableMetadataProperties;
   dropdownOptions?: string[];
@@ -93,38 +92,26 @@ export interface VariableMetadata extends Omit<DBVariableMetadata, "associatedCo
   //variableSetID?: string; // TODO: Determine if this would be better set up as a Map<string, string[]> on the VariableContext.
 }
 
+export const getChildVariableIds = (inVariable: Variable): string[] => {
+  return inVariable?.metadata?.childVariableIds || [];
+};
+
 export interface AssociatedSubvariableProperties {
   id: string;
   fullName: string;
   bValueEntered: boolean;
 }
 
-export interface Interpretation {
-  [key: string]: string;
-}
-
 export type InterpretationData = {
-  default: Interpretation;
-  intro?: string;
-  ageGroups?: { [ageRange: string]: Interpretation };
-  bInterpretationDataType: true;
+  contentBlock: ContentBlock;
 };
 
-export const isInterpretationData = (data: any): data is InterpretationData => {
-  return data?.bInterpretationDataType === true;
-}
+export const getVariableInterpretation = (value: string, interpretationBlock: ContentBlock, age?: number): string => {
+  const interpretationText = getTextFromContentBlock(interpretationBlock, false, new Map<string, any>(), () => value, () => true) || "No interpretation available for this variable's value.";
+  return interpretationText;
 
-const findVariableInterpretationAgeGroup = (interpretationData: InterpretationData, age: number): string | undefined => {
-  if (!interpretationData.ageGroups) return undefined;
-
-  return Object.keys(interpretationData.ageGroups).find(ageRange => {
-      const [minAge, maxAge] = ageRange.split('-').map(Number);
-      return age >= minAge && age <= maxAge;
-  });
-}
-
-export const getVariableInterpretation = (value: string, interpretationData: InterpretationData, age?: number): string => {
-  const intro = interpretationData.intro;
+  /*
+    const intro = interpretationData.intro;
   let interpretation = "No interpretation available for this value.";
   const ageGroup = age ? findVariableInterpretationAgeGroup(interpretationData, age) : undefined;
   const interpretationGroup = ageGroup ? interpretationData.ageGroups![ageGroup] : interpretationData.default;
@@ -147,4 +134,20 @@ export const getVariableInterpretation = (value: string, interpretationData: Int
   }
 
   return interpretation;
+  */
+};
+
+/*
+export const isInterpretationData = (data: any): data is InterpretationData => {
+  return data?.bInterpretationDataType === true;
 }
+
+const findVariableInterpretationAgeGroup = (interpretationData: InterpretationData, age: number): string | undefined => {
+  if (!interpretationData.ageGroups) return undefined;
+
+  return Object.keys(interpretationData.ageGroups).find(ageRange => {
+      const [minAge, maxAge] = ageRange.split('-').map(Number);
+      return age >= minAge && age <= maxAge;
+  });
+}
+*/

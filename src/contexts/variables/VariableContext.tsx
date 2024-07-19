@@ -165,9 +165,10 @@ function reducer(state: VariableReducerState, action: VariableAction): VariableR
       const existingVariable = state.variableMap.get(action.id);
       if (existingVariable) {
         const updatedVariable = { ...existingVariable, value: action.value } as Variable;
-        if (updatedVariable.metadata?.interpretationData && action.value) {
-          console.log("VariableContext::reducer()[SET_VARIABLE] - Setting interpretation for variable:", updatedVariable);
-          updatedVariable.metadata.interpretation = getVariableInterpretation(action.value.toString(), updatedVariable.metadata.interpretationData);
+        if (updatedVariable.metadata?.interpretationBlock && action.value) {
+          const updatedInterpretation = getVariableInterpretation(action.value.toString(), updatedVariable.metadata.interpretationBlock);
+          console.log("VariableContext::reducer()[SET_VARIABLE] - Setting interpretation for variable:", updatedVariable, "updated interpretation to set: ", updatedInterpretation);
+          updatedVariable.metadata.interpretation = updatedInterpretation;
         }
         logger.debug("VariableContext::reducer()[SET_VARIABLE] - Updated variable:", updatedVariable);
         const updatedVariableMap = new Map(state.variableMap) as VariableMap;

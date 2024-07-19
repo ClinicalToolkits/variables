@@ -1,5 +1,10 @@
+import React from "react";
+import { Text } from "@mantine/core";
 import { UUID, DataType, Tag, InfoFieldConfig, ComboboxData, ObjectInfoConfig, Age, emptyTag, asUUID, ID_SEPERATOR, UniversalIdToken } from "@clinicaltoolkits/type-definitions";
 import { DBVariableMetadata, VariableMetadata, emptyVariableMetadata } from "./VariableMetadata";
+import { ContentBlock, ContentBlockEditor, convertBlocksToTipTapDoc } from "@clinicaltoolkits/content-blocks";
+import { getVariableDescription } from "../utility/getVariableContent";
+import { renderVariableTooltipContent } from "../contexts/variables/utility/child-variables/test";
 
 export class VariableIdToken {
   variableId: string;
@@ -74,10 +79,13 @@ export interface Variable {
   value: VariableValue;
   subgroupTag: Tag | null;
   orderWithinSet: number;
+  content?: VariableContent | null;
   metadata?: VariableMetadata | null;
   associatedEntityAbbreviatedName?: string;
 }
-
+export const getVariableFullName = (variable: Variable): string => variable.fullName;
+export const getVariableValue = (variable: Variable): VariableValue => variable.value;
+export const getVariableMetadata = (variable: Variable): VariableMetadata | null | undefined => variable.metadata;
 export const emptyVariable: Variable = {
   idToken: new VariableIdToken({ variableId: "", entityId: "", entityVersionId: "" }),
   fullName: "",
@@ -93,8 +101,29 @@ export const emptyVariable: Variable = {
   associatedEntityAbbreviatedName: "",
 };
 
+export const getTooltipContentFromVariable = (item?: Variable): React.ReactNode => {
+  const descriptionContent = item ? getVariableDescription(item) : [];
+  const tipTapContent = convertBlocksToTipTapDoc(descriptionContent);
+  console.log("descriptionContent: ", tipTapContent);
+  return (
+    <ContentBlockEditor content={ tipTapContent } />
+  );
+};
+
 // Defines the configuration to be used when displaying the variable as an input element.
-export const getVariableInputConfig = (size?: string): InfoFieldConfig<Variable> => ({ id: { path: "idToken.id" }, propertyPath: "value", displayName: { path: "fullName" }, type: { path: "dataType" }, metadata: { path: "metadata" }, props: { size } });
+export const getVariableInputConfig = (size?: string, mapTest?: Map<string | number, Variable>): InfoFieldConfig<Variable> => {
+  return (
+    {
+      id: { path: "idToken.id" },
+      propertyPath: "value",
+      displayName: { path: "fullName" },
+      type: { path: "dataType" },
+      metadata: { path: "metadata" },
+      props: { size },
+      tooltipContent: (item?: Variable) => item && renderVariableTooltipContent(item, mapTest),
+    }
+  )
+};
 
 // Defines the configuration to be used when displaying a single variable as a form (e.g., for editing it's properties and/or creating new variables).
 export const getVariableObjectConfig = (tagsComboboxData: ComboboxData[], entitiesComboboxData: ComboboxData[], descriptiveRatingSetComboxData: ComboboxData[], variablesComboboxData: ComboboxData[]): ObjectInfoConfig<Variable> => (
@@ -141,6 +170,22 @@ export function convertVariablesToComboboxData(variables: Variable[]): ComboboxD
     };
   });
 }
+
+export interface VariableContent {
+  [key: string]: ContentBlock[];
+}
+
+// Takes in an array of property names and a variable object and returns an array of content blocks whereby each block is a value from content corresponding to the property path. // TODO: Needs updating, not currently used.
+/*export const getVariableContent = (variable: Variable, propertyPaths: string[]): ContentBlock[] => {
+  const contentBlocks: ContentBlock[] = [];
+  for (const propertyPath of propertyPaths) {
+    const content = variable.content;
+    if (!content) continue;
+    const contentBlock = content[propertyPath];
+    if (contentBlock) contentBlocks.push(contentBlock);
+  }
+  return contentBlocks;
+};*/
 
 /*
 export function getVariableSubversionText(variableKey: string): string {

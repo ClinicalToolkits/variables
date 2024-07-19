@@ -3,6 +3,9 @@ import { Container, MantineProvider } from '@mantine/core';
 import { InputFieldRegistryProvider, ThemeKeys, containerStyles, resolver, themes } from '@clinicaltoolkits/universal-react-components';
 import { createCTSupabaseClient, getSupabaseClient, setSupabaseClient } from '@clinicaltoolkits/utility-functions';
 import { DescriptiveRatingTable, VariableProvider, VariableSetSelector, VariableTable, fetchVariableSets, useVariableContext, variableComponentRegistry, variableTypesWithTwoFields } from '../src/index';
+import { useEditor } from "@tiptap/react";
+import { ContentBlockWrapperOptionsProvider, defaultExtensions, InfoFieldNodeProvider } from '@clinicaltoolkits/content-blocks';
+import { RichTextEditor as MantineRichTextEditor } from '@mantine/tiptap';
 
 interface TestContextWrapperProps {
   children?: ReactNode;  // Define children as an optional prop
@@ -18,16 +21,24 @@ export const TestContextWrapper: React.FC<TestContextWrapperProps> = ({ children
 
   return (
     <MantineProvider theme={themes[ThemeKeys.Default]} cssVariablesResolver={resolver(ThemeKeys.Default)} defaultColorScheme='auto'>
-      <InputFieldRegistryProvider registry={variableComponentRegistry} dataTypesWithTwoFields={variableTypesWithTwoFields}>
-        <VariableProvider>
-          <Test />
-        </VariableProvider>
-      </InputFieldRegistryProvider>
+      <ContentBlockWrapperOptionsProvider>
+        <InputFieldRegistryProvider registry={variableComponentRegistry} dataTypesWithTwoFields={variableTypesWithTwoFields}>
+        <InfoFieldNodeProvider>
+
+          <VariableProvider>
+            <Test />
+          </VariableProvider>
+        </InfoFieldNodeProvider>
+        </InputFieldRegistryProvider>
+      </ContentBlockWrapperOptionsProvider>
     </MantineProvider>
   );
 };
 
+/*
 const Test: React.FC = () => {
+  const editor = useEditor({ extensions: defaultExtensions, editable: false });
+
   const { addVariableSet } = useVariableContext();
   const [bInitialized, setInitialized] = React.useState(false);
 
@@ -59,10 +70,57 @@ const Test: React.FC = () => {
   }, [getSupabaseClient()]);
 
   return bInitialized ? (
-    <Container className={containerStyles.mainContent}>
-      <VariableTable />
-      <VariableSetSelector />
-      <DescriptiveRatingTable />
-    </Container>
+    <MantineRichTextEditor editor={editor}>
+      <Container className={containerStyles.mainContent}>
+        <VariableTable />
+        <VariableSetSelector />
+        <DescriptiveRatingTable />
+      </Container>
+    </MantineRichTextEditor>
+  ) : <div>...Signing in</div>;
+};
+*/
+const Test: React.FC = () => {
+  const editor = useEditor({ extensions: defaultExtensions, editable: false });
+
+  const [bInitialized, setInitialized] = React.useState(false);
+  const { addVariableSet } = useVariableContext();
+
+  const handleSignIn = async () => {
+    const authTokenResponse = await getSupabaseClient().auth.signInWithPassword({ email: "nicholaskhendrickson@gmail.com", password: "Zargoth.2" });
+    if (authTokenResponse.error) {
+      console.error("Error signing in: ", authTokenResponse.error);
+      return null;
+    }
+    console.log("Signed in successfully");
+  };
+
+  const handleInitializeVariables = async () => {
+    const variableSets = await fetchVariableSets();
+    variableSets.forEach((variableSet) => {
+      addVariableSet(variableSet);
+    });
+  };
+
+  const handleInitializeTest = async () => {
+    if (bInitialized === false) {
+      await handleSignIn();
+      await handleInitializeVariables();
+      setInitialized(true);
+    }
+  };
+  
+  useEffect(() => {
+    handleInitializeTest();
+  }, [getSupabaseClient()]);
+
+  return bInitialized ? (
+    <MantineRichTextEditor editor={editor}>
+      <Container className={containerStyles.mainContent}>
+        <VariableTable />
+        <VariableSetSelector />
+        <DescriptiveRatingTable />
+      </Container>
+    </MantineRichTextEditor>
   ) : <div>...Signing in</div>;
 };

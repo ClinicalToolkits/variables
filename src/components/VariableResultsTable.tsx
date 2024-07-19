@@ -23,7 +23,7 @@ export const VariableResultsTable: React.FC<VariableResultsTableProps> = ({ sele
       const columns = createColumnsFromStringArray(
         unmodifiedTableData[0],
         (value: string) => {
-          const variableId = value.split(".")?.[0]; console.log("split value variableId: ", variableId);
+          const variableId = value.split(".")?.[0];
           const variable = variableMap.get(variableId);
           let variableValue = variable?.value ? getVariableValueAsString(variable.value, variable.dataType) : value;
           return variableValue;

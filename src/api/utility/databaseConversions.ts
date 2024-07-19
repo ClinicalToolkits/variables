@@ -1,11 +1,12 @@
-import { Tag, asUUID, generateUUID, convertStringToTag, tags as tagsRecord } from "@clinicaltoolkits/type-definitions";
+import { Tag, generateUUID, convertStringToTag, tags as tagsRecord, CURLY_BRACE_ENCLOSURE } from "@clinicaltoolkits/type-definitions";
 import { FetchVariablesParams } from "../fetchVariable";
 import { getAbbreviatedVariablePlaceholder, getVariablePlaceholder } from "./getPlaceholders";
-import { RegexRule, applyRegexRules, batchApplyRegexRules, isEmptyValue, isStringArray } from "@clinicaltoolkits/utility-functions";
-import { DBVariable, DBVariableMetadata, Interpretation, InterpretationData, Variable, VariableIdToken, VariableMetadata, isInterpretationData } from "../../types";
+import { RegexRuleArray, applyRegexRules, batchApplyRegexRules, isEmptyValue, isStringArray } from "@clinicaltoolkits/utility-functions";
+import { DBVariable, DBVariableMetadata, InterpretationData, Variable, VariableIdToken, VariableMetadata } from "../../types";
 import { appendPrefixToVariablesRule, removePrefixesFromVariablesRule } from "../../utility";
+import { AffixParams, cleanContentBlockData } from "@clinicaltoolkits/content-blocks";
 
-const convertActionParamIds = (actionParams: { name: string, label?: string, [key: string]: any }, rules: RegexRule[]): { name: string, [key: string]: any } => {
+const convertActionParamIds = (actionParams: { name: string, label?: string, [key: string]: any }, rules: RegexRuleArray): { name: string, [key: string]: any } => {
   return Object.entries(actionParams).reduce((acc, [key, value]) => {
     if (key === "ids" && isStringArray(value)) {
       acc[key] = batchApplyRegexRules(value, rules);
@@ -31,6 +32,10 @@ export function convertDBVariableToVariable(dbVariable: DBVariable, entityId?: s
 
   const tags: Tag[] = tag_ids?.map((tagId) => tagsRecord[tagId]) ?? [];
   const variableIdToken = new VariableIdToken({ variableId: id, entityId, entityVersionId });
+  const affixParams: AffixParams = {
+    inPrefixToApply: `${entityId}:${entityVersionId}`,
+    inEnclosure: ['', ''],
+  }
 
   const convertedVariable: Variable = {
     idToken: variableIdToken,
@@ -55,8 +60,8 @@ export function convertDBVariableToVariable(dbVariable: DBVariable, entityId?: s
       })),
       placeholder: getVariablePlaceholder(data_type),
       abbreviatedPlaceholder: getAbbreviatedVariablePlaceholder(data_type),
-      interpretationData: metadata?.interpretationData ? parseInterpretationData(metadata.interpretationData, [appendPrefixToVariablesRule(`${entityId}:${entityVersionId}`, ['{', '}'])]) : undefined,
-      actionParams: metadata?.actionParams ? convertActionParamIds(metadata.actionParams, [appendPrefixToVariablesRule(`${entityId}:${entityVersionId}`, ['', ''])]) : undefined,
+      interpretationBlock: metadata?.interpretationBlock ? cleanContentBlockData({ inContentBlock: metadata.interpretationBlock, inRegexRules: [appendPrefixToVariablesRule(affixParams)], bInFetching: true, inAffixParams: affixParams }) : undefined,
+      actionParams: metadata?.actionParams ? convertActionParamIds(metadata.actionParams, [appendPrefixToVariablesRule({ inPrefixToApply: `${entityId}:${entityVersionId}`, inEnclosure: ['', ''] })]) : undefined,
     },
     associatedEntityAbbreviatedName: associated_entity_abbreviated_name,
   }
@@ -94,8 +99,12 @@ export function convertVariablePropertiesToDB(variable: Partial<Variable>): Part
 const getDBVariableMetadataProperties = (metadata?: VariableMetadata | null): DBVariableMetadata | undefined => {
   if (isEmptyValue(metadata)) return undefined;
 
+  const affixParams: AffixParams = {
+    inEnclosure: CURLY_BRACE_ENCLOSURE,
+  }
+
   const metadataProperties: DBVariableMetadata = {
-    description: getDBVariableMetadataProperty(metadata?.description),
+    description: getDBVariableMetadataProperty(metadata?.description), // TODO: Possibly deprecating this field
     descriptiveRatingId: getDBVariableMetadataProperty(metadata?.descriptiveRatingId),
     bNormallyDistributed: getDBVariableMetadataProperty(metadata?.bNormallyDistributed),
     visibility: getDBVariableMetadataProperty(metadata?.visibility),
@@ -109,8 +118,8 @@ const getDBVariableMetadataProperties = (metadata?: VariableMetadata | null): DB
     associatedSubvariableIds: getDBVariableMetadataProperty(metadata?.associatedSubvariableIds),
     bOptional: getDBVariableMetadataProperty(metadata?.bOptional),
     bIncludeInDynamicTable: getDBVariableMetadataProperty(metadata?.bIncludeInDynamicTable),
-    interpretationData: parseInterpretationDataForDB(metadata?.interpretationData),
-    actionParams: metadata?.actionParams ? convertActionParamIds(metadata?.actionParams || {}, [removePrefixesFromVariablesRule(['{', '}'])]) : undefined,
+    interpretationBlock: metadata?.interpretationBlock ? cleanContentBlockData({ inContentBlock: metadata.interpretationBlock, inRegexRules: [removePrefixesFromVariablesRule(affixParams)], bInFetching: false, inAffixParams: affixParams }) : null, // TODO: Possibly deprecating this field
+    actionParams: metadata?.actionParams ? convertActionParamIds(metadata?.actionParams || {}, [removePrefixesFromVariablesRule(affixParams)]) : undefined,
   }
 
   return metadataProperties;
@@ -121,7 +130,8 @@ const getDBVariableMetadataProperty = (property: any) => {
   return bShouldAddProperty ? property : undefined;
 }
 
-const parseInterpretationData = (data: Omit<InterpretationData, "bInterpretationDataType">, rules: RegexRule[]): InterpretationData => {
+/*
+const parseInterpretationData = (data: Omit<InterpretationData, "bInterpretationDataType">, rules: RegexRuleArray): InterpretationData => {
   const transform = (input: Interpretation): Interpretation => {
     return Object.entries(input).reduce((acc, [key, value]) => {
       const newKey = applyRegexRules(key, rules);
@@ -146,10 +156,37 @@ const parseInterpretationData = (data: Omit<InterpretationData, "bInterpretation
 
 const parseInterpretationDataForDB = (data: InterpretationData | undefined | null): Omit<InterpretationData, "bInterpretationDataType"> | null => {
   if (!data) return null;
-  const updatedData = parseInterpretationData(data, [removePrefixesFromVariablesRule(['{', '}'])]);
+  const updatedData = parseInterpretationData(data, [removePrefixesFromVariablesRule({ inEnclosure: ['{', '}']})]);
   return {
     default: updatedData.default,
     intro: updatedData?.intro,
     ageGroups: updatedData.ageGroups,
   };
 };
+*/
+/*
+
+const parseInterpretationData = (inContentBlock: ContentBlock | undefined, entityId?: string, entityVersionId?: string, bInFetching?: boolean): ContentBlock | undefined => {
+  if (!inContentBlock) return undefined;
+
+  let prefix = "";
+  if (entityId && entityVersionId) {
+    prefix = `${entityId}:${entityVersionId}`;
+  } else if (entityId) {
+    prefix = entityId;
+  } else if (entityVersionId) {
+    prefix = entityVersionId;
+  }
+
+  let affixParams: AffixParams = { inEnclosure: ['{', '}'] };
+  bInFetching ? affixParams.inPrefixToApply = prefix : affixParams.inPrefixToRemove = prefix;
+  const regexRules = bInFetching ? [appendPrefixToVariablesRule(affixParams)] : [removePrefixesFromVariablesRule(affixParams)];
+
+  return cleanContentBlockData({
+    inContentBlock,
+    inAffixParams: affixParams,
+    inRegexRules: regexRules,
+    bInFetching,
+  });
+};
+*/
