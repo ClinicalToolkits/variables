@@ -1,11 +1,15 @@
 import React, { useEffect } from "react";
 import { HeadingProps, InfoFieldModal } from "@clinicaltoolkits/universal-react-components";
 import { MantineSize } from "@mantine/core";
-import { InfoFieldClassNames, PathsToFields } from "@clinicaltoolkits/type-definitions";
+import { InfoFieldClassNames, PathsToFields, RecordType } from "@clinicaltoolkits/type-definitions";
 import { getOptionalVariableSubgroups, handleAutoVariableUpdates, useSortAndGroupVariables, useVariableContext } from "../../contexts";
 import { Variable, VariableSet, getVariableInputConfig } from "../../types";
 import { VariableCheckboxGroup } from "./VariableCheckboxGroup";
 import { ActionCheckboxProvider, ActionCheckboxes } from "./ActionCheckbox";
+import { useEditor } from "@tiptap/react";
+import { RichTextEditor as MantineRichTextEditor } from '@mantine/tiptap';
+import { defaultExtensions, useContentBlockWrapperOptions, useInfoFieldOptions } from "@clinicaltoolkits/content-blocks";
+import { logger } from "@clinicaltoolkits/utility-functions";
 import styles from "./styles.module.css";
 
 export interface VariableSetModalProps {
@@ -20,6 +24,14 @@ export interface VariableSetModalProps {
   }
 }
 
+export const getObjectIdPathTest = <Variable extends RecordType>(): PathsToFields<Variable> => {
+  return "idToken.id" as PathsToFields<Variable>;
+}
+
+export const getObjectLabelPathTest = <Variable extends RecordType>(): PathsToFields<Variable> => {
+  return "abbreviatedName" as PathsToFields<Variable>;
+}
+
 /**
  * A modal that displays a list of variable sets as a dropdown and allows the user to select a variable set to display.
  * Once a variable set is selected, the modal will display the variables in the set as input fields.
@@ -27,13 +39,38 @@ export interface VariableSetModalProps {
  * @param titleChildren - Array of React nodes to display in the title section of the modal.
  */
 export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet, headingChildren = [], opened, onClose, headingProps, inputSize = "sm", classNames }) => {
+  const { updateGetObjectFunction, updateGetObjectDisplayNameFunction } = useInfoFieldOptions(); // TODO: Variables module should be self-contained, that means that the InfoFieldOptionsProvider needs to be placed inside the VariablesProvider (or we need to allow the user to optionally pass in the InfoFieldProvider to the VariablesProvider, in order to allow them more control over Provider placement and nesting)
+  const { updateGetObjectMapFunction, updateGetObjectIdPathFunction, updateGetObjectLabelPathFunction } = useContentBlockWrapperOptions(); // TODO: Ditto
   const { variableMap, setVariable } = useVariableContext();
+  const descriptionEditor = useEditor({ extensions: defaultExtensions, editable: false });
+  const interpretationEditor = useEditor({ extensions: defaultExtensions, editable: false });
+
+  useEffect(() => {
+    updateGetObjectIdPathFunction(getObjectIdPathTest);
+    updateGetObjectLabelPathFunction(getObjectLabelPathTest);
+  },[]);
+
+  useEffect(() => {
+    const getObject = (id: string): RecordType | undefined => {
+      const object = variableMap.get(id);
+      return object;
+    };
+
+    const getObjectDisplayName = (id: string): string => {
+      const object = getObject(id);
+      const displayName = object?.abbreviatedName || "NOTHIN HERE, SOMETHIN WRONG";
+      return displayName;
+    };
+
+    updateGetObjectFunction(getObject);
+    updateGetObjectDisplayNameFunction(getObjectDisplayName);
+    updateGetObjectMapFunction(() => variableMap);
+  }, [variableMap]);
+
   const { variableGroups } = useSortAndGroupVariables(variableSet);
-  console.log("variableSet: ", variableSet);
-  console.log("variableGroups: ", variableGroups);
   const handleVariableUpdate = (id: string | number, propertyPath: PathsToFields<Variable>, value: any) => {
     if (typeof id !== "string") return;
-    console.log("variable updated: ", id, propertyPath, value);
+    logger.debug("VariableSetModal - Variable updated, id: ", id + " propertyPath: " + propertyPath + " value: " + value);
     setVariable(id, value);
     handleAutoVariableUpdates(id, value, variableMap, setVariable);
   };
@@ -59,8 +96,6 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
     ...classNames?.infoField,
   };
 
-  console.log("variableGroups: ", variableGroups);
-
   return (
     <ActionCheckboxProvider>
       <InfoFieldModal
@@ -70,7 +105,7 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
         headingProps={{...defaultHeadingProps, ...headingProps}}
         subgroupOrder={5}
         objectGroups={variableGroups}
-        infoFieldConfig={getVariableInputConfig(inputSize, variableMap)}
+        infoFieldConfig={getVariableInputConfig(inputSize, variableMap, descriptionEditor, interpretationEditor)}
         onUpdate={handleVariableUpdate}
         gap={0}
         classNames={infoFieldClassNames}

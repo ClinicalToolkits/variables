@@ -3,11 +3,12 @@ import { Variable, VariableValue } from "./Variable";
 
 /**
  * Function type definition for adding a variable.
- * @param {Variable} variable - The variable object to be added.
+ * @param {Variable} variable - The variable object to be added (an array for batch adding).
  * @param {string} label - The label associated with the variable (optional).
  * @throws Will throw an error if variable or label is invalid.
  */
 export type AddVariableFunction = (variable: Variable, variableSubsetKey?: string) => void;
+export type BatchAddVariableFunction = (variables: Variable[], variableSubsetKey?: string) => void;
 
 /**
  * Function type definition for removing a variable.

@@ -12,7 +12,6 @@ interface TestContextWrapperProps {
 }
 
 export const TestContextWrapper: React.FC<TestContextWrapperProps> = ({ children }) => {
-
   const ctSupabaseClientConfig = {
     anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdva29wc2Ntc2doa3BhcHdlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY5MTEyMjcxMCwiZXhwIjoyMDA2Njk4NzEwfQ.O9oWtzaMPe5rzs_xt9rieWsw4iROMu42XEja1iIdqA4" // This is the servic_role key it should only be used for testing, allows overriding RLS policies
   }
@@ -21,16 +20,11 @@ export const TestContextWrapper: React.FC<TestContextWrapperProps> = ({ children
 
   return (
     <MantineProvider theme={themes[ThemeKeys.Default]} cssVariablesResolver={resolver(ThemeKeys.Default)} defaultColorScheme='auto'>
-      <ContentBlockWrapperOptionsProvider>
-        <InputFieldRegistryProvider registry={variableComponentRegistry} dataTypesWithTwoFields={variableTypesWithTwoFields}>
-        <InfoFieldNodeProvider>
-
-          <VariableProvider>
-            <Test />
-          </VariableProvider>
-        </InfoFieldNodeProvider>
-        </InputFieldRegistryProvider>
-      </ContentBlockWrapperOptionsProvider>
+      <InputFieldRegistryProvider registry={variableComponentRegistry} dataTypesWithTwoFields={variableTypesWithTwoFields}>
+        <VariableProvider>
+          <Test />
+        </VariableProvider>
+      </InputFieldRegistryProvider>
     </MantineProvider>
   );
 };
@@ -82,7 +76,6 @@ const Test: React.FC = () => {
 */
 const Test: React.FC = () => {
   const editor = useEditor({ extensions: defaultExtensions, editable: false });
-
   const [bInitialized, setInitialized] = React.useState(false);
   const { addVariableSet } = useVariableContext();
 
@@ -115,12 +108,10 @@ const Test: React.FC = () => {
   }, [getSupabaseClient()]);
 
   return bInitialized ? (
-    <MantineRichTextEditor editor={editor}>
       <Container className={containerStyles.mainContent}>
         <VariableTable />
         <VariableSetSelector />
         <DescriptiveRatingTable />
       </Container>
-    </MantineRichTextEditor>
   ) : <div>...Signing in</div>;
 };

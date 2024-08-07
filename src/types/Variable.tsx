@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Text } from "@mantine/core";
 import { UUID, DataType, Tag, InfoFieldConfig, ComboboxData, ObjectInfoConfig, Age, emptyTag, asUUID, ID_SEPERATOR, UniversalIdToken } from "@clinicaltoolkits/type-definitions";
 import { DBVariableMetadata, VariableMetadata, emptyVariableMetadata } from "./VariableMetadata";
 import { ContentBlock, ContentBlockEditor, convertBlocksToTipTapDoc } from "@clinicaltoolkits/content-blocks";
 import { getVariableDescription } from "../utility/getVariableContent";
-import { renderVariableTooltipContent } from "../contexts/variables/utility/child-variables/test";
+import { renderVariableTooltipContent } from "../contexts/variables/utility/child-variables/renderVariableTooltipContent";
+import { Editor } from "@tiptap/react";
 
 export class VariableIdToken {
   variableId: string;
@@ -101,17 +102,8 @@ export const emptyVariable: Variable = {
   associatedEntityAbbreviatedName: "",
 };
 
-export const getTooltipContentFromVariable = (item?: Variable): React.ReactNode => {
-  const descriptionContent = item ? getVariableDescription(item) : [];
-  const tipTapContent = convertBlocksToTipTapDoc(descriptionContent);
-  console.log("descriptionContent: ", tipTapContent);
-  return (
-    <ContentBlockEditor content={ tipTapContent } />
-  );
-};
-
 // Defines the configuration to be used when displaying the variable as an input element.
-export const getVariableInputConfig = (size?: string, mapTest?: Map<string | number, Variable>): InfoFieldConfig<Variable> => {
+export const getVariableInputConfig = (size?: string, mapTest?: Map<string, Variable>, descriptionEditor?: Editor | null, interpretationEditor?: Editor | null): InfoFieldConfig<Variable> => {
   return (
     {
       id: { path: "idToken.id" },
@@ -120,7 +112,9 @@ export const getVariableInputConfig = (size?: string, mapTest?: Map<string | num
       type: { path: "dataType" },
       metadata: { path: "metadata" },
       props: { size },
-      tooltipContent: (item?: Variable) => item && renderVariableTooltipContent(item, mapTest),
+      tooltipContent: (item?: Variable) => item && useMemo(() => {
+        return renderVariableTooltipContent(item, mapTest, descriptionEditor, interpretationEditor);
+      }, [item, mapTest]),
     }
   )
 };
@@ -174,6 +168,16 @@ export function convertVariablesToComboboxData(variables: Variable[]): ComboboxD
 export interface VariableContent {
   [key: string]: ContentBlock[];
 }
+
+
+/*export const getTooltipContentFromVariable = (item?: Variable): React.ReactNode => {
+  const descriptionContent = item ? getVariableDescription(item) : [];
+  const tipTapContent = convertBlocksToTipTapDoc(descriptionContent);
+  console.log("descriptionContent: ", tipTapContent);
+  return (
+    <ContentBlockEditor inContent={ tipTapContent } />
+  );
+};*/
 
 // Takes in an array of property names and a variable object and returns an array of content blocks whereby each block is a value from content corresponding to the property path. // TODO: Needs updating, not currently used.
 /*export const getVariableContent = (variable: Variable, propertyPaths: string[]): ContentBlock[] => {

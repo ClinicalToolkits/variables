@@ -2,24 +2,21 @@ import React from "react";
 import { Grid, Text } from "@mantine/core";
 import { convertAgeToAgeString, isHidden, isTypeAge } from "@clinicaltoolkits/type-definitions";
 import { getChildVariableIds, getVariableFullName, getVariableMetadata, getVariableValue, Variable } from "../../../../types";
-import { getVariableDescription } from "../../../../utility/getVariableContent";
-import { ContentBlockEditor, convertBlocksToTipTapDoc } from "@clinicaltoolkits/content-blocks";
-export const renderVariableTooltipContent = (variable: Variable, data?: Map<string | number, Variable>): React.ReactElement | null => {
+import { getVariableDescription, getVariableInterpretation } from "../../../../utility/getVariableContent";
+import { ContentBlockEditor, convertBlocksToTipTapDoc, defaultExtensions } from "@clinicaltoolkits/content-blocks";
+import { Editor } from "@tiptap/react";
 
+export const renderVariableTooltipContent = (variable: Variable, data?: Map<string, Variable>, descriptionEditor?: Editor | null, interpretationEditor?: Editor | null): React.ReactElement | null => {
   //const metadata = resolveSubobjectConfigPath(item, fieldConfig.metadata);
-  const tooltipContentBlocks = getVariableDescription(variable);
-  const tooltipContent = convertBlocksToTipTapDoc(tooltipContentBlocks);
+  const descriptionBlocks = getVariableDescription(variable);
+  const interpretationBlocks = data ? getVariableInterpretation(variable, data, true) : [];
+
   const childIds = getChildVariableIds(variable);
-
   const childVariableContent = renderChildVariableValues(data, variable.fullName, childIds);
-
-  if (!childVariableContent && !tooltipContent) {
-    return null;
-  }
 
   return (
     <Grid columns={4} fz={"xs"} maw={"350px"}>
-      {tooltipContent && (
+      {descriptionBlocks && descriptionBlocks.length > 0 && (
         <>
           <Grid.Col span={1}>
             <Text fw={"bold"} fz={"xs"}>
@@ -27,7 +24,19 @@ export const renderVariableTooltipContent = (variable: Variable, data?: Map<stri
             </Text>
           </Grid.Col>
           <Grid.Col span={3}>
-            <ContentBlockEditor content={tooltipContent} />
+            <ContentBlockEditor inEditor={descriptionEditor} inContentBlocks={descriptionBlocks} />
+          </Grid.Col>
+        </>
+      )}
+      {interpretationBlocks && interpretationBlocks.length > 0 && (
+        <>
+          <Grid.Col span={1}>
+            <Text fw={"bold"} fz={"xs"}>
+              {"Interpretation: "}
+            </Text>
+          </Grid.Col>
+          <Grid.Col span={3}>
+            <ContentBlockEditor inEditor={interpretationEditor} inContentBlocks={interpretationBlocks} />
           </Grid.Col>
         </>
       )}

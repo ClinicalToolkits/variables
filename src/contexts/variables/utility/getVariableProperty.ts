@@ -1,11 +1,8 @@
+import { hasProperty } from "@clinicaltoolkits/type-definitions";
 import { Variable, VariableMap, AssociatedSubvariableProperties } from "../../../types";
 import { shouldDisplayVariable } from "../utility";
 
-function hasProperty<T extends object>(obj: T, key: keyof any): key is keyof T {
-  return key in obj;
-}
-
-export function getVariableProperty(key: string, propertyPath: keyof Variable, variableMap: VariableMap): string {
+/*export function getVariableProperty(key: string, propertyPath: keyof Variable, variableMap: VariableMap): string {
   const item = variableMap.get(key);
   if (item && hasProperty(item, propertyPath)) {
     return item[propertyPath] as string; // Cast to string if you're sure it's always a string.
@@ -41,7 +38,7 @@ function getValueByPath(obj: any, pathString: string): any {
   }, obj);
 }
 
-// TODO: This whole thing is a clusterfuck of error prone nonsense. Needs to be cleaned up and refined (e.g., individual checks for specific properties to return a specific structure is absurd).
+// TODO: This whole thing is a clusterfuck of error prone nonsense. Needs to be cleaned up and refined (e.g., individual checks for specific properties to return a specific structure is absurd, this needs to be more generic and dynamic, so it can work with any object, while still retaining the ability to provide specific checks if necessary).
 export function getVariablePropertyFromKeyPath(variableMap: VariableMap, keyPath: string, bRemoveUnusedVariables = false): any {
   // The first part is the key, the rest is the property path
   const [variableKey, ...propertyParts] = keyPath.split('.');
@@ -116,3 +113,4 @@ export function getVariablePropertyFromKeyPath(variableMap: VariableMap, keyPath
   // Use the revised getValueByPath that supports "property.subproperty[0]" syntax
   return getValueByPath(variable, propertyPath);
 }
+*/

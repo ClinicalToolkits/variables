@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { GenericTable, TableColumn } from "@clinicaltoolkits/universal-react-components";
 import { VariableSet } from "../types";
 import { useVariableContext } from "../contexts";
-import { filterVariablesForTable, generateTableData, getVariableValueAsString } from "../utility";
+import { filterVariablesForTable, generateTableData, getVariableInterpretation, getVariableValueAsString } from "../utility";
 import { Stack, Text } from "@mantine/core";
 
 interface VariableResultsTableProps {
@@ -55,6 +55,11 @@ export const VariableResultsTable: React.FC<VariableResultsTableProps> = ({ sele
         ) : null;
       }
       setFooterData(footerDisplayComponent);
+
+      tableDataVariables.forEach((variable) => {
+        const interpretationBlocks = getVariableInterpretation(variable, variableMap, false);
+        interpretationBlocks.forEach(block => console.log("content interpretation block: ", block));
+      })
     }
   }, [variableMap]);
 

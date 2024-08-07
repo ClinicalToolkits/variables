@@ -1,27 +1,7 @@
 
-import { getSupabaseClient, logger } from "@clinicaltoolkits/utility-functions";
+import { getSupabaseClient } from "@clinicaltoolkits/utility-functions";
 import { convertVariableSetDBToVariableSet } from "./convertVariableSetDBToVariableSet";
 import { VariableSet } from "../../types";
-
-export const fetchVariableSet = async (entityVersionId: string): Promise<VariableSet | null> => {
-  const supabaseClient = getSupabaseClient();
-  let variableSet: VariableSet | null = null;
-
-  const { data, error } = await supabaseClient
-    .from("variable_sets_view")
-    .select("*")
-    .eq("entity_version_id", entityVersionId)
-
-  if (error) {
-    logger.error(`Supabase error: ${error.message}`);
-  }
-
-  if (data && data.length > 0) {
-    variableSet = convertVariableSetDBToVariableSet(data[0]);
-  }
-  console.log("fetchVariableSet variableSet:", variableSet);
-  return variableSet;
-};
 
 export const fetchVariableSets = async (entityVersionIds?: string[]): Promise<VariableSet[]> => {
   const supabaseClient = getSupabaseClient();
@@ -44,4 +24,10 @@ export const fetchVariableSets = async (entityVersionIds?: string[]): Promise<Va
     console.error(`Failed to fetch variable sets. Printing error: `, error);
     throw error;
   }
+};
+
+export const fetchVariableSet = async (entityVersionId: string): Promise<VariableSet | null> => {
+  const variableSets = await fetchVariableSets([entityVersionId]);
+
+  return variableSets.length > 0 ? variableSets[0] : null;
 };

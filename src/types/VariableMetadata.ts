@@ -23,7 +23,7 @@ export interface VariableMetadataProperties {
 
 export interface DBVariableMetadata {
   description?: string;
-  interpretationBlock?: ContentBlock | null;
+  //interpretationBlock?: ContentBlock | null;
   descriptiveRatingId?: string;
   bNormallyDistributed?: boolean;
   visibility?: Visibility;
@@ -105,12 +105,12 @@ export interface AssociatedSubvariableProperties {
 export type InterpretationData = {
   contentBlock: ContentBlock;
 };
-
+/*
 export const getVariableInterpretation = (value: string, interpretationBlock: ContentBlock, age?: number): string => {
   const interpretationText = getTextFromContentBlock(interpretationBlock, false, new Map<string, any>(), () => value, () => true) || "No interpretation available for this variable's value.";
   return interpretationText;
 
-  /*
+  
     const intro = interpretationData.intro;
   let interpretation = "No interpretation available for this value.";
   const ageGroup = age ? findVariableInterpretationAgeGroup(interpretationData, age) : undefined;
@@ -134,10 +134,10 @@ export const getVariableInterpretation = (value: string, interpretationBlock: Co
   }
 
   return interpretation;
-  */
+  
 };
 
-/*
+
 export const isInterpretationData = (data: any): data is InterpretationData => {
   return data?.bInterpretationDataType === true;
 }

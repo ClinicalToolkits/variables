@@ -60,7 +60,6 @@ export function convertDBVariableToVariable(dbVariable: DBVariable, entityId?: s
       })),
       placeholder: getVariablePlaceholder(data_type),
       abbreviatedPlaceholder: getAbbreviatedVariablePlaceholder(data_type),
-      interpretationBlock: metadata?.interpretationBlock ? cleanContentBlockData({ inContentBlock: metadata.interpretationBlock, inRegexRules: [appendPrefixToVariablesRule(affixParams)], bInFetching: true, inAffixParams: affixParams }) : undefined,
       actionParams: metadata?.actionParams ? convertActionParamIds(metadata.actionParams, [appendPrefixToVariablesRule({ inPrefixToApply: `${entityId}:${entityVersionId}`, inEnclosure: ['', ''] })]) : undefined,
     },
     associatedEntityAbbreviatedName: associated_entity_abbreviated_name,
@@ -118,7 +117,6 @@ const getDBVariableMetadataProperties = (metadata?: VariableMetadata | null): DB
     associatedSubvariableIds: getDBVariableMetadataProperty(metadata?.associatedSubvariableIds),
     bOptional: getDBVariableMetadataProperty(metadata?.bOptional),
     bIncludeInDynamicTable: getDBVariableMetadataProperty(metadata?.bIncludeInDynamicTable),
-    interpretationBlock: metadata?.interpretationBlock ? cleanContentBlockData({ inContentBlock: metadata.interpretationBlock, inRegexRules: [removePrefixesFromVariablesRule(affixParams)], bInFetching: false, inAffixParams: affixParams }) : null, // TODO: Possibly deprecating this field
     actionParams: metadata?.actionParams ? convertActionParamIds(metadata?.actionParams || {}, [removePrefixesFromVariablesRule(affixParams)]) : undefined,
   }
 

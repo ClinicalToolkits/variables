@@ -1,6 +1,5 @@
-import { isValidUUID, ID_SEPERATOR, REPEATING_UUID_REGEX_PATTERN } from "@clinicaltoolkits/type-definitions";
+import { isValidUUID, ID_SEPERATOR, REPEATING_UUID_REGEX_PATTERN, getObjectPropertyFromKeyPath } from "@clinicaltoolkits/type-definitions";
 import { createReplacementFunction, RegexRule, RegexRuleArray } from "@clinicaltoolkits/utility-functions";
-import { getVariablePropertyFromKeyPath } from "../contexts";
 import { DEMOGRAPHICS, USER_INFORMATION, DEMOGRAPHICS_PREFIX, USER_INFORMATION_PREFIX, getVariableIdFromString, VariableMap } from "../types";
 import { AffixParams } from "@clinicaltoolkits/content-blocks";
 
@@ -180,7 +179,7 @@ const replaceUUIDPatternFunction = (
     const propertyPath = matches.everythingAfterBasePattern;
     const idPath = uuid + (propertyPath || "");
     console.log("replaceUUIDPatternParams - idPath: ", idPath);
-    return getVariablePropertyFromKeyPath(variableMap, idPath, bRemoveEmptyVariableContent);
+    return getObjectPropertyFromKeyPath(variableMap, idPath, bRemoveEmptyVariableContent);
   },
   suffixes: suffixesToSearch,
 });

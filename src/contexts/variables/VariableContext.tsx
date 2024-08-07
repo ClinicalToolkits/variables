@@ -23,16 +23,19 @@ import {
   Variable,
   VariableValue,
   VariableSet,
-  getVariableInterpretation,
   SetVariablePropertyFunction,
-  BatchSetVariablePropertyFunction
+  BatchSetVariablePropertyFunction,
+  BatchAddVariableFunction
 } from "../../types";
 import { getDescriptorFromParentVariable } from "../../utility/getDescriptor";
 import { getPercentileRankFromParentVariable } from "../../utility/getPercentileRank";
 import { updateAssociatedSubvariableProperties } from "./utility";
 import { fetchDescriptiveRatingsArray } from "../../descriptive-ratings/api";
+import { getVariableInterpretation } from "../../utility";
+import { ContentBlockWrapperOptionsProvider } from "@clinicaltoolkits/content-blocks";
 
 const ADD_VARIABLE = "ADD_VARIABLE";
+const BATCH_ADD_VARIABLE = "BATCH_ADD_VARIABLE";
 const REMOVE_VARIABLE = "REMOVE_VARIABLE";
 const SET_VARIABLE = "SET_VARIABLE";
 const SET_VARIABLE_PROPERTY = "SET_VARIABLE_PROPERTY";
@@ -51,6 +54,7 @@ interface VariableContextProps {
   variableMap: VariableMap;
   variableSetMap: VariableSetMap;
   addVariable: AddVariableFunction;
+  batchAddVariable: BatchAddVariableFunction;
   removeVariable: RemoveVariableFunction;
   setVariable: SetVariableFunction;
   setVariableProperty: SetVariablePropertyFunction;
@@ -69,6 +73,7 @@ interface VariableContextProps {
 
 type VariableAction =
   | { type: typeof ADD_VARIABLE; variable: Variable, variableSetId?: string }
+  | { type: typeof BATCH_ADD_VARIABLE; variables: Variable[], variableSetId?: string }
   | { type: typeof SET_VARIABLE; id: string; value: VariableValue }
   | { type: typeof SET_VARIABLE_PROPERTY; id: string; propertyPath: PathsToFields<Variable>; value: any }
   | { type: typeof BATCH_SET_VARIABLE_PROPERTY; ids: string[]; propertyPath: PathsToFields<Variable>; value: any }
@@ -155,6 +160,27 @@ function reducer(state: VariableReducerState, action: VariableAction): VariableR
       return state;
     }
 
+    case BATCH_ADD_VARIABLE: {
+      const variablesToAdd = action.variables;
+      const newVariableMap = new Map(state.variableMap);
+      variablesToAdd.forEach((variable) => {
+        const variableToAddId = variable.idToken.id;
+        if (action.variableSetId) {
+          variable.variableSetId = action.variableSetId;
+        }
+
+        const bVariableAlreadyExists = newVariableMap.has(variableToAddId);
+        if (!bVariableAlreadyExists) {
+          newVariableMap.set(variableToAddId, variable);
+        }
+      });
+
+      return {
+        ...state,
+        variableMap: newVariableMap,
+      };
+    }
+
     case REMOVE_VARIABLE: {
       const variablesAfterDeletion = new Map(state.variableMap);
       variablesAfterDeletion.delete(action.id);
@@ -165,11 +191,6 @@ function reducer(state: VariableReducerState, action: VariableAction): VariableR
       const existingVariable = state.variableMap.get(action.id);
       if (existingVariable) {
         const updatedVariable = { ...existingVariable, value: action.value } as Variable;
-        if (updatedVariable.metadata?.interpretationBlock && action.value) {
-          const updatedInterpretation = getVariableInterpretation(action.value.toString(), updatedVariable.metadata.interpretationBlock);
-          console.log("VariableContext::reducer()[SET_VARIABLE] - Setting interpretation for variable:", updatedVariable, "updated interpretation to set: ", updatedInterpretation);
-          updatedVariable.metadata.interpretation = updatedInterpretation;
-        }
         logger.debug("VariableContext::reducer()[SET_VARIABLE] - Updated variable:", updatedVariable);
         const updatedVariableMap = new Map(state.variableMap) as VariableMap;
         updatedVariableMap.set(action.id, updatedVariable);
@@ -270,6 +291,7 @@ export const VariableContext = createContext<VariableContextProps>({
   variableSetMap: new Map() as VariableSetMap,
 
   addVariable: (() => {}) as AddVariableFunction,
+  batchAddVariable: (() => {}) as BatchAddVariableFunction,
   setVariable: (() => {}) as SetVariableFunction,
   setVariableProperty: (() => {}) as SetVariablePropertyFunction,
   batchSetVariableProperty: (() => {}) as BatchSetVariablePropertyFunction,
@@ -298,9 +320,10 @@ export const useVariableContext = (): VariableContextProps => {
 
 interface VariableProviderProps {
   children: ReactNode;
+  inContentBlockWrapperOptionsProvider?: React.FC;
 }
 
-export const VariableProvider = ({ children }: VariableProviderProps) => {
+export const VariableProvider = ({ children, inContentBlockWrapperOptionsProvider }: VariableProviderProps) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   // Used to access the current state inside of an async function
@@ -320,6 +343,13 @@ export const VariableProvider = ({ children }: VariableProviderProps) => {
       }
       dispatch({ type: ADD_VARIABLE, variable, variableSetId });
     }) as AddVariableFunction,
+
+    batchAddVariable: ((variables: Variable[], variableSetId?: string) => {
+      if (!variables) {
+        throw new Error("VariableContext::batchAddVariable - Missing 'variables'.");
+      }
+      variables.forEach((variable) => value.addVariable(variable, variableSetId));
+    }) as BatchAddVariableFunction,
 
     setVariable: ((id: string, value: VariableValue) => {
       dispatch({ type: SET_VARIABLE, id, value });
@@ -345,7 +375,8 @@ export const VariableProvider = ({ children }: VariableProviderProps) => {
           try {
             const variablesToAdd = await fetchVariablesFromSet(variableSet);
             const pendingVariableIds = new Set(variablesToAdd.map(v => v.idToken.id));
-            variablesToAdd.forEach((variable) => value.addVariable(variable, variableSet.idToken.id));
+            value.batchAddVariable(variablesToAdd, variableSet.idToken.id);
+            //variablesToAdd.forEach((variable) => value.addVariable(variable, variableSet.idToken.id));
 
             if (variableSet.metadata?.descriptiveRatingId) {
               const descriptiveRatings = await fetchDescriptiveRatingsArray(variableSet.metadata?.descriptiveRatingId);
@@ -377,7 +408,7 @@ export const VariableProvider = ({ children }: VariableProviderProps) => {
                 resolve(); // Resolve the promise as all variables are added
               } else {
                 logger.debug("VariableContext::addVariableSet::checkAllVariablesAdded() - Not all variables added. Checking again in 50ms.");
-                setTimeout(checkAllVariablesAdded, 50); // Recheck after a delay // TODO: Use of setTimeout is not ideal may want to consider moving to an event-based approach (e.g., maintain a list of pending variables and remove them as they are added).
+                setTimeout(checkAllVariablesAdded, 100); // Recheck after a delay // TODO: Use of setTimeout is not ideal may want to consider moving to an event-based approach (e.g., maintain a list of pending variables and remove them as they are added).
                 checkAttempts++;
               }
             };
@@ -491,7 +522,14 @@ export const VariableProvider = ({ children }: VariableProviderProps) => {
 
   };
 
-  return <VariableContext.Provider value={value}>{children}</VariableContext.Provider>;
+  const ContentBlockProvider = inContentBlockWrapperOptionsProvider ?? ContentBlockWrapperOptionsProvider; // TODO: Unsure if this is the best way to handle this (need to weigh the pros and cons of including another package's provider within this provider)
+  return (
+    <VariableContext.Provider value={value}>
+      <ContentBlockProvider>
+        {children}
+      </ContentBlockProvider>
+    </VariableContext.Provider>
+  );
 };
 
 
