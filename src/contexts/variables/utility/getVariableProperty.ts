@@ -1,5 +1,5 @@
 import { hasProperty } from "@clinicaltoolkits/type-definitions";
-import { Variable, VariableMap, AssociatedSubvariableProperties } from "../../../types";
+import { Variable, VariableMap, /*AssociatedSubvariableProperties*/ } from "../../../types";
 import { shouldDisplayVariable } from "../utility";
 
 /*export function getVariableProperty(key: string, propertyPath: keyof Variable, variableMap: VariableMap): string {

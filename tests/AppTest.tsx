@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect } from 'react';
 import { Container, MantineProvider } from '@mantine/core';
-import { InputFieldRegistryProvider, ThemeKeys, containerStyles, resolver, themes } from '@clinicaltoolkits/universal-react-components';
-import { createCTSupabaseClient, getSupabaseClient, setSupabaseClient } from '@clinicaltoolkits/utility-functions';
+import { InputFieldRegistryProvider, ThemeKeys, TooltipProvider, containerStyles, resolver, themes } from '@clinicaltoolkits/universal-react-components';
+import { createCTSupabaseClient, getSupabaseClient, logger, setSupabaseClient } from '@clinicaltoolkits/utility-functions';
 import { DescriptiveRatingTable, VariableProvider, VariableSetSelector, VariableTable, fetchVariableSets, useVariableContext, variableComponentRegistry, variableTypesWithTwoFields } from '../src/index';
 import { useEditor } from "@tiptap/react";
 import { ContentBlockWrapperOptionsProvider, defaultExtensions, InfoFieldNodeProvider } from '@clinicaltoolkits/content-blocks';
@@ -21,9 +21,11 @@ export const TestContextWrapper: React.FC<TestContextWrapperProps> = ({ children
   return (
     <MantineProvider theme={themes[ThemeKeys.Default]} cssVariablesResolver={resolver(ThemeKeys.Default)} defaultColorScheme='auto'>
       <InputFieldRegistryProvider registry={variableComponentRegistry} dataTypesWithTwoFields={variableTypesWithTwoFields}>
-        <VariableProvider>
-          <Test />
-        </VariableProvider>
+        <TooltipProvider>
+          <VariableProvider>
+            <Test />
+          </VariableProvider>
+        </TooltipProvider>
       </InputFieldRegistryProvider>
     </MantineProvider>
   );
@@ -74,8 +76,9 @@ const Test: React.FC = () => {
   ) : <div>...Signing in</div>;
 };
 */
+
+const bInitializeVariables = false;
 const Test: React.FC = () => {
-  const editor = useEditor({ extensions: defaultExtensions, editable: false });
   const [bInitialized, setInitialized] = React.useState(false);
   const { addVariableSet } = useVariableContext();
 
@@ -89,10 +92,14 @@ const Test: React.FC = () => {
   };
 
   const handleInitializeVariables = async () => {
-    const variableSets = await fetchVariableSets();
-    variableSets.forEach((variableSet) => {
-      addVariableSet(variableSet);
-    });
+    if (bInitializeVariables) {
+      const variableSets = await fetchVariableSets();
+      variableSets.forEach((variableSet) => {
+        addVariableSet(variableSet);
+      });
+    } else {
+      logger.log("Skipping variable initialization in Test component.");
+    }
   };
 
   const handleInitializeTest = async () => {

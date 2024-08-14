@@ -21,6 +21,7 @@ export const shouldDisplayVariables = (variableIds: string[], variableMap: Varia
 
 export const shouldDisplayVariable = (variable: Variable) => {
   const bShouldDisplay = isVisible(variable.metadata?.visibility);
+  console.log("shouldDisplayVariable - ", "variable: ", variable, "bShouldDisplay: ", bShouldDisplay);
   return bShouldDisplay;
 };
 

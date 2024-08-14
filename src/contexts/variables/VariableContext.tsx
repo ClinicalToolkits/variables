@@ -31,8 +31,9 @@ import { getDescriptorFromParentVariable } from "../../utility/getDescriptor";
 import { getPercentileRankFromParentVariable } from "../../utility/getPercentileRank";
 import { updateAssociatedSubvariableProperties } from "./utility";
 import { fetchDescriptiveRatingsArray } from "../../descriptive-ratings/api";
+import { ContentBlockWrapperOptionsProvider, defaultExtensions, RichTextProvider } from "@clinicaltoolkits/content-blocks";
 import { getVariableInterpretation } from "../../utility";
-import { ContentBlockWrapperOptionsProvider } from "@clinicaltoolkits/content-blocks";
+import { Editor } from "@tiptap/react";
 
 const ADD_VARIABLE = "ADD_VARIABLE";
 const BATCH_ADD_VARIABLE = "BATCH_ADD_VARIABLE";
@@ -321,9 +322,10 @@ export const useVariableContext = (): VariableContextProps => {
 interface VariableProviderProps {
   children: ReactNode;
   inContentBlockWrapperOptionsProvider?: React.FC;
+  inRichTextProvider?: React.FC;
 }
 
-export const VariableProvider = ({ children, inContentBlockWrapperOptionsProvider }: VariableProviderProps) => {
+export const VariableProvider = ({ children, inContentBlockWrapperOptionsProvider, inRichTextProvider }: VariableProviderProps) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   // Used to access the current state inside of an async function
@@ -519,16 +521,17 @@ export const VariableProvider = ({ children, inContentBlockWrapperOptionsProvide
     getClientAge: () => {
       return getClientAgeHelper(state.variableMap);
     },
-
   };
 
   const ContentBlockProvider = inContentBlockWrapperOptionsProvider ?? ContentBlockWrapperOptionsProvider; // TODO: Unsure if this is the best way to handle this (need to weigh the pros and cons of including another package's provider within this provider)
   return (
-    <VariableContext.Provider value={value}>
-      <ContentBlockProvider>
-        {children}
-      </ContentBlockProvider>
-    </VariableContext.Provider>
+    <RichTextProvider>
+      <VariableContext.Provider value={value}>
+        <ContentBlockProvider>
+          {children}
+        </ContentBlockProvider>
+      </VariableContext.Provider>
+    </RichTextProvider>
   );
 };
 

@@ -1,4 +1,4 @@
-import { Age, AgeRangeString, PathsToFields, RowType, Visibility } from "@clinicaltoolkits/type-definitions";
+import { Age, AgeRangeString, AssociatedSubobjectProperties, PathsToFields, RowType, Visibility } from "@clinicaltoolkits/type-definitions";
 import { DescriptiveRating } from "../descriptive-ratings/types/DescriptiveRating";
 import { ContentBlock, getTextFromContentBlock } from "@clinicaltoolkits/content-blocks";
 import { Variable } from "./Variable";
@@ -85,7 +85,7 @@ export interface VariableMetadata extends Omit<DBVariableMetadata, "associatedCo
   properties?: VariableMetadataProperties;
   dropdownOptions?: string[];
   associatedCompositeVariableId?: string;
-  associatedSubvariableProperties?: AssociatedSubvariableProperties[];
+  associatedSubvariableProperties?: AssociatedSubobjectProperties[];
   bChild?: boolean;
   placeholder?: string;
   abbreviatedPlaceholder?: string;
@@ -95,12 +95,6 @@ export interface VariableMetadata extends Omit<DBVariableMetadata, "associatedCo
 export const getChildVariableIds = (inVariable: Variable): string[] => {
   return inVariable?.metadata?.childVariableIds || [];
 };
-
-export interface AssociatedSubvariableProperties {
-  id: string;
-  fullName: string;
-  bValueEntered: boolean;
-}
 
 export type InterpretationData = {
   contentBlock: ContentBlock;

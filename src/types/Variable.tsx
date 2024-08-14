@@ -1,11 +1,12 @@
 import React, { useMemo } from "react";
-import { Text } from "@mantine/core";
+import { HoverCardProps, Text } from "@mantine/core";
 import { UUID, DataType, Tag, InfoFieldConfig, ComboboxData, ObjectInfoConfig, Age, emptyTag, asUUID, ID_SEPERATOR, UniversalIdToken } from "@clinicaltoolkits/type-definitions";
 import { DBVariableMetadata, VariableMetadata, emptyVariableMetadata } from "./VariableMetadata";
 import { ContentBlock, ContentBlockEditor, convertBlocksToTipTapDoc } from "@clinicaltoolkits/content-blocks";
 import { getVariableDescription } from "../utility/getVariableContent";
 import { renderVariableTooltipContent } from "../contexts/variables/utility/child-variables/renderVariableTooltipContent";
 import { Editor } from "@tiptap/react";
+import { ExtendedHoverCardProps } from "@clinicaltoolkits/universal-react-components";
 
 export class VariableIdToken {
   variableId: string;
@@ -103,7 +104,7 @@ export const emptyVariable: Variable = {
 };
 
 // Defines the configuration to be used when displaying the variable as an input element.
-export const getVariableInputConfig = (size?: string, mapTest?: Map<string, Variable>, descriptionEditor?: Editor | null, interpretationEditor?: Editor | null): InfoFieldConfig<Variable> => {
+export const getVariableInputConfig = (size?: string, mapTest?: Map<string, Variable>, descriptionEditor?: Editor | null, interpretationEditor?: Editor | null, hoverCardProps?: ExtendedHoverCardProps): InfoFieldConfig<Variable> => {
   return (
     {
       id: { path: "idToken.id" },
@@ -111,7 +112,7 @@ export const getVariableInputConfig = (size?: string, mapTest?: Map<string, Vari
       displayName: { path: "fullName" },
       type: { path: "dataType" },
       metadata: { path: "metadata" },
-      props: { size },
+      props: { size, hoverCard: hoverCardProps },
       tooltipContent: (item?: Variable) => item && useMemo(() => {
         return renderVariableTooltipContent(item, mapTest, descriptionEditor, interpretationEditor);
       }, [item, mapTest]),

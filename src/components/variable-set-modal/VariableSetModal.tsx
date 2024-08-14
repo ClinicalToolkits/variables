@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
-import { HeadingProps, InfoFieldModal } from "@clinicaltoolkits/universal-react-components";
-import { MantineSize } from "@mantine/core";
+import React, { useEffect, useState } from "react";
+import { ExtendedHoverCardProps, HeadingProps, InfoFieldModal } from "@clinicaltoolkits/universal-react-components";
+import { HoverCardProps, MantineSize } from "@mantine/core";
 import { InfoFieldClassNames, PathsToFields, RecordType } from "@clinicaltoolkits/type-definitions";
 import { getOptionalVariableSubgroups, handleAutoVariableUpdates, useSortAndGroupVariables, useVariableContext } from "../../contexts";
 import { Variable, VariableSet, getVariableInputConfig } from "../../types";
@@ -8,7 +8,7 @@ import { VariableCheckboxGroup } from "./VariableCheckboxGroup";
 import { ActionCheckboxProvider, ActionCheckboxes } from "./ActionCheckbox";
 import { useEditor } from "@tiptap/react";
 import { RichTextEditor as MantineRichTextEditor } from '@mantine/tiptap';
-import { defaultExtensions, useContentBlockWrapperOptions, useInfoFieldOptions } from "@clinicaltoolkits/content-blocks";
+import { defaultExtensions, useContentBlockWrapperOptions, useInfoFieldOptions, useRichTextEditor } from "@clinicaltoolkits/content-blocks";
 import { logger } from "@clinicaltoolkits/utility-functions";
 import styles from "./styles.module.css";
 
@@ -42,8 +42,8 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
   const { updateGetObjectFunction, updateGetObjectDisplayNameFunction } = useInfoFieldOptions(); // TODO: Variables module should be self-contained, that means that the InfoFieldOptionsProvider needs to be placed inside the VariablesProvider (or we need to allow the user to optionally pass in the InfoFieldProvider to the VariablesProvider, in order to allow them more control over Provider placement and nesting)
   const { updateGetObjectMapFunction, updateGetObjectIdPathFunction, updateGetObjectLabelPathFunction } = useContentBlockWrapperOptions(); // TODO: Ditto
   const { variableMap, setVariable } = useVariableContext();
-  const descriptionEditor = useEditor({ extensions: defaultExtensions, editable: false });
-  const interpretationEditor = useEditor({ extensions: defaultExtensions, editable: false });
+  const descriptionEditor = useRichTextEditor("variableDescriptionEditor", false);
+  const interpretationEditor = useRichTextEditor("variableInterpretationEditor", false);
 
   useEffect(() => {
     updateGetObjectIdPathFunction(getObjectIdPathTest);
@@ -96,6 +96,13 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
     ...classNames?.infoField,
   };
 
+  // Added delay to hover card to prevent unpleasant/accidental hover card popups and to allow the editors to update their content
+  const hoverCardProps: ExtendedHoverCardProps = {
+    closeDelay: 100,
+    openDelay: 400,
+    bInPinnable: true,
+  }
+
   return (
     <ActionCheckboxProvider>
       <InfoFieldModal
@@ -105,7 +112,7 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
         headingProps={{...defaultHeadingProps, ...headingProps}}
         subgroupOrder={5}
         objectGroups={variableGroups}
-        infoFieldConfig={getVariableInputConfig(inputSize, variableMap, descriptionEditor, interpretationEditor)}
+        infoFieldConfig={getVariableInputConfig(inputSize, variableMap, descriptionEditor, interpretationEditor, hoverCardProps)}
         onUpdate={handleVariableUpdate}
         gap={0}
         classNames={infoFieldClassNames}

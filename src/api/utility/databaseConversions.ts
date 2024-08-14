@@ -1,4 +1,4 @@
-import { Tag, generateUUID, convertStringToTag, tags as tagsRecord, CURLY_BRACE_ENCLOSURE } from "@clinicaltoolkits/type-definitions";
+import { Tag, generateUUID, convertStringToTag, tags as tagsRecord, CURLY_BRACE_ENCLOSURE, Visibility } from "@clinicaltoolkits/type-definitions";
 import { FetchVariablesParams } from "../fetchVariable";
 import { getAbbreviatedVariablePlaceholder, getVariablePlaceholder } from "./getPlaceholders";
 import { RegexRuleArray, applyRegexRules, batchApplyRegexRules, isEmptyValue, isStringArray } from "@clinicaltoolkits/utility-functions";
@@ -61,6 +61,7 @@ export function convertDBVariableToVariable(dbVariable: DBVariable, entityId?: s
       placeholder: getVariablePlaceholder(data_type),
       abbreviatedPlaceholder: getAbbreviatedVariablePlaceholder(data_type),
       actionParams: metadata?.actionParams ? convertActionParamIds(metadata.actionParams, [appendPrefixToVariablesRule({ inPrefixToApply: `${entityId}:${entityVersionId}`, inEnclosure: ['', ''] })]) : undefined,
+      visibility: metadata?.visibility !== undefined ? metadata?.visibility as Visibility : Visibility.VISIBLE, // Default to visible if not set
     },
     associatedEntityAbbreviatedName: associated_entity_abbreviated_name,
   }
