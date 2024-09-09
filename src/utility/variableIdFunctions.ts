@@ -1,5 +1,5 @@
 import { isValidUUID, ID_SEPERATOR, REPEATING_UUID_REGEX_PATTERN, getObjectPropertyFromKeyPath } from "@clinicaltoolkits/type-definitions";
-import { createReplacementFunction, RegexRule, RegexRuleArray } from "@clinicaltoolkits/utility-functions";
+import { createReplacementFunction, logger, RegexRule, RegexRuleArray } from "@clinicaltoolkits/utility-functions";
 import { DEMOGRAPHICS, USER_INFORMATION, DEMOGRAPHICS_PREFIX, USER_INFORMATION_PREFIX, getVariableIdFromString, VariableMap } from "../types";
 import { AffixParams } from "@clinicaltoolkits/content-blocks";
 
@@ -30,10 +30,8 @@ const appendPrefixToVariablesReplacement = (args: AffixParams) => {
   });
 };
 export const appendPrefixToVariablesRule = (args: AffixParams): RegexRule => {
-  const { inEnclosure } = args;
-
   return {
-    pattern: REPEATING_UUID_REGEX_PATTERN(inEnclosure),
+    pattern: REPEATING_UUID_REGEX_PATTERN(args?.inEnclosure),
     replacement: appendPrefixToVariablesReplacement({ ...args }),
     shouldApply: (args) => args?.inPrefixToApply !== undefined,
     metadata: {
@@ -61,10 +59,6 @@ const removePrefixesFromVariablesReplacement = (args: AffixParams) => {
 };
 export const removePrefixesFromVariablesRule = (args: AffixParams): RegexRule => {
   const { inPrefixToRemove, inEnclosure } = args;
-
-  if (inPrefixToRemove === "07d18958-a88b-4077-9782-975a7d7f74cc:46079a2a-86a7-4eb2-ac14-af57dc11dcf8") {
-    console.log("removePrefixesFromVariablesRule() - inPrefixToRemove: ", inPrefixToRemove, "inEnclosure: ", inEnclosure);
-  }
 
   return {
     pattern: REPEATING_UUID_REGEX_PATTERN(inEnclosure),
@@ -178,7 +172,7 @@ const replaceUUIDPatternFunction = (
     const uuid = matches.basePattern;
     const propertyPath = matches.everythingAfterBasePattern;
     const idPath = uuid + (propertyPath || "");
-    console.log("replaceUUIDPatternParams - idPath: ", idPath);
+    logger.debug("replaceUUIDPatternParams - idPath: ", idPath);
     return getObjectPropertyFromKeyPath(variableMap, idPath, bRemoveEmptyVariableContent);
   },
   suffixes: suffixesToSearch,

@@ -1,14 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { ExtendedHoverCardProps, HeadingProps, InfoFieldModal } from "@clinicaltoolkits/universal-react-components";
-import { HoverCardProps, MantineSize } from "@mantine/core";
+import { MantineSize } from "@mantine/core";
 import { InfoFieldClassNames, PathsToFields, RecordType } from "@clinicaltoolkits/type-definitions";
 import { getOptionalVariableSubgroups, handleAutoVariableUpdates, useSortAndGroupVariables, useVariableContext } from "../../contexts";
 import { Variable, VariableSet, getVariableInputConfig } from "../../types";
 import { VariableCheckboxGroup } from "./VariableCheckboxGroup";
 import { ActionCheckboxProvider, ActionCheckboxes } from "./ActionCheckbox";
-import { useEditor } from "@tiptap/react";
-import { RichTextEditor as MantineRichTextEditor } from '@mantine/tiptap';
-import { defaultExtensions, useContentBlockWrapperOptions, useInfoFieldOptions, useRichTextEditor } from "@clinicaltoolkits/content-blocks";
+import { useContentBlockWrapperOptions, useInfoFieldOptions, useRichTextEditor } from "@clinicaltoolkits/content-blocks";
 import { logger } from "@clinicaltoolkits/utility-functions";
 import styles from "./styles.module.css";
 

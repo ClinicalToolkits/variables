@@ -116,6 +116,7 @@ interface SetValueFromOptionsMenuVariableProps {
 }
 
 export const setValueFromOptionsMenuVariable = ({ value, optionsMenuVariable, batchSetVariableProperty }: SetValueFromOptionsMenuVariableProps): void => {
+  console.log("setValueFromOptionsMenuVariable", value, optionsMenuVariable);
   if (value !== undefined && optionsMenuVariable.metadata?.actionParams?.ids) {
     const { ids, propertyPath, name } = optionsMenuVariable.metadata.actionParams;
     switch (name) {

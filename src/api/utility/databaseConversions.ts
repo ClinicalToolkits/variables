@@ -1,20 +1,26 @@
 import { Tag, generateUUID, convertStringToTag, tags as tagsRecord, CURLY_BRACE_ENCLOSURE, Visibility } from "@clinicaltoolkits/type-definitions";
 import { FetchVariablesParams } from "../fetchVariable";
 import { getAbbreviatedVariablePlaceholder, getVariablePlaceholder } from "./getPlaceholders";
-import { RegexRuleArray, applyRegexRules, batchApplyRegexRules, isEmptyValue, isStringArray } from "@clinicaltoolkits/utility-functions";
-import { DBVariable, DBVariableMetadata, InterpretationData, Variable, VariableIdToken, VariableMetadata } from "../../types";
+import { RegexRuleArray, batchApplyRegexRules, isEmptyValue, isStringArray, logger } from "@clinicaltoolkits/utility-functions";
+import { DBVariable, DBVariableMetadata, Variable, VariableIdToken, VariableMetadata } from "../../types";
 import { appendPrefixToVariablesRule, removePrefixesFromVariablesRule } from "../../utility";
-import { AffixParams, cleanContentBlockData } from "@clinicaltoolkits/content-blocks";
+import { AffixParams } from "@clinicaltoolkits/content-blocks";
 
-const convertActionParamIds = (actionParams: { name: string, label?: string, [key: string]: any }, rules: RegexRuleArray): { name: string, [key: string]: any } => {
-  return Object.entries(actionParams).reduce((acc, [key, value]) => {
+const convertActionParamIds = (actionParams: { name: string, label?: string, [key: string]: any }, rules: RegexRuleArray, affixParams?: AffixParams): { name: string, [key: string]: any } => {
+  logger.debug("convertActionParamIds - Input", actionParams);
+  const convertedActionParamIds = Object.entries(actionParams).reduce((acc, [key, value]) => {
     if (key === "ids" && isStringArray(value)) {
-      acc[key] = batchApplyRegexRules(value, rules);
+      logger.debug("convertActionParamIds - ids before conversion", value);
+      acc[key] = batchApplyRegexRules(value, rules, affixParams);
+      logger.debug("convertActionParamIds - ids after conversion", acc[key]);
     } else {
       acc[key] = value;  // Preserve the original key-value pair
     }
     return acc;
   }, {} as { name: string, label?: string, [key: string]: any });
+
+  logger.debug("convertActionParamIds - Output", convertedActionParamIds);
+  return convertedActionParamIds;
 };
 
 export function convertDBVariableToVariable(dbVariable: DBVariable, entityId?: string, entityVersionId?: string, labelPrefix?: string, variableSetParams?: FetchVariablesParams['variableSetParams']): Variable {
@@ -60,7 +66,7 @@ export function convertDBVariableToVariable(dbVariable: DBVariable, entityId?: s
       })),
       placeholder: getVariablePlaceholder(data_type),
       abbreviatedPlaceholder: getAbbreviatedVariablePlaceholder(data_type),
-      actionParams: metadata?.actionParams ? convertActionParamIds(metadata.actionParams, [appendPrefixToVariablesRule({ inPrefixToApply: `${entityId}:${entityVersionId}`, inEnclosure: ['', ''] })]) : undefined,
+      actionParams: metadata?.actionParams ? convertActionParamIds(metadata.actionParams, [appendPrefixToVariablesRule(affixParams)], affixParams) : undefined,
       visibility: metadata?.visibility !== undefined ? metadata?.visibility as Visibility : Visibility.VISIBLE, // Default to visible if not set
     },
     associatedEntityAbbreviatedName: associated_entity_abbreviated_name,
