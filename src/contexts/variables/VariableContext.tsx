@@ -25,19 +25,21 @@ import {
   VariableSet,
   SetVariablePropertyFunction,
   BatchSetVariablePropertyFunction,
-  BatchAddVariableFunction
+  BatchAddVariableFunction,
+  SetWholeVariableFunction
 } from "../../types";
 import { getDescriptorFromParentVariable } from "../../utility/getDescriptor";
 import { getPercentileRankFromParentVariable } from "../../utility/getPercentileRank";
 import { updateAssociatedSubvariableProperties } from "./utility";
 import { fetchDescriptiveRatingsArray } from "../../descriptive-ratings/api";
 import { ContentBlockWrapperOptionsProvider, defaultExtensions, RichTextProvider } from "@clinicaltoolkits/content-blocks";
-import { getVariableInterpretation } from "../../utility";
+import { getContentBlocksFromVariableInterpretation } from "../../utility";
 import { Editor } from "@tiptap/react";
 
 const ADD_VARIABLE = "ADD_VARIABLE";
 const BATCH_ADD_VARIABLE = "BATCH_ADD_VARIABLE";
 const REMOVE_VARIABLE = "REMOVE_VARIABLE";
+const SET_WHOLE_VARIABLE = "SET_WHOLE_VARIABLE";
 const SET_VARIABLE = "SET_VARIABLE";
 const SET_VARIABLE_PROPERTY = "SET_VARIABLE_PROPERTY";
 const BATCH_SET_VARIABLE_PROPERTY = "BATCH_SET_VARIABLE_PROPERTY";
@@ -57,6 +59,7 @@ interface VariableContextProps {
   addVariable: AddVariableFunction;
   batchAddVariable: BatchAddVariableFunction;
   removeVariable: RemoveVariableFunction;
+  setWholeVariable: SetWholeVariableFunction;
   setVariable: SetVariableFunction;
   setVariableProperty: SetVariablePropertyFunction;
   batchSetVariableProperty: BatchSetVariablePropertyFunction;
@@ -68,13 +71,13 @@ interface VariableContextProps {
   getRelatedVariablesBySet: GetRelatedVariablesBySetFunction;
   getChildVariables: GetChildVariablesFunction;
   markVariablesHidden: MarkVariablesHiddenFunction;
-  getVariablesArray: (variableKeys?: string[]) => Variable[];
   getClientAge: () => number | null;
 }
 
 type VariableAction =
   | { type: typeof ADD_VARIABLE; variable: Variable, variableSetId?: string }
   | { type: typeof BATCH_ADD_VARIABLE; variables: Variable[], variableSetId?: string }
+  | { type: typeof SET_WHOLE_VARIABLE; variable: Variable }
   | { type: typeof SET_VARIABLE; id: string; value: VariableValue }
   | { type: typeof SET_VARIABLE_PROPERTY; id: string; propertyPath: PathsToFields<Variable>; value: any }
   | { type: typeof BATCH_SET_VARIABLE_PROPERTY; ids: string[]; propertyPath: PathsToFields<Variable>; value: any }
@@ -188,6 +191,26 @@ function reducer(state: VariableReducerState, action: VariableAction): VariableR
       return { ...state, variableMap: variablesAfterDeletion };
     }
 
+    case SET_WHOLE_VARIABLE: {
+      const variable = action.variable;
+      const variableId = variable.idToken.id;
+      console.log("SET_WHOLE_VARIABLE: ", variable);
+      const updatedVariableMap = new Map(state.variableMap);
+      updatedVariableMap.set(variableId, variable);
+      if (variable.metadata?.associatedCompositeVariableIdToken) {
+        logger.debug("VariableContext::reducer()[SET_VARIABLE] - Updating associated composite variable");
+        const associatedCompositeVariable = updatedVariableMap.get(variable.metadata.associatedCompositeVariableIdToken.id);
+        if (associatedCompositeVariable) {
+          updateAssociatedSubvariableProperties({ variable: associatedCompositeVariable, subvariableId: variable.idToken.id, subVariableValue: variable.value });
+          updatedVariableMap.set(associatedCompositeVariable.idToken.id, associatedCompositeVariable);
+        }
+      }
+
+      updateChildVariables(variable, state.variableMap, updatedVariableMap, state.variableSetMap);
+      console.log("updatedVariableMap: ", updatedVariableMap);
+      return { ...state, variableMap: updatedVariableMap };
+    }
+
     case SET_VARIABLE: {
       const existingVariable = state.variableMap.get(action.id);
       if (existingVariable) {
@@ -195,9 +218,9 @@ function reducer(state: VariableReducerState, action: VariableAction): VariableR
         logger.debug("VariableContext::reducer()[SET_VARIABLE] - Updated variable:", updatedVariable);
         const updatedVariableMap = new Map(state.variableMap) as VariableMap;
         updatedVariableMap.set(action.id, updatedVariable);
-        if (updatedVariable.metadata?.associatedCompositeVariableId) {
+        if (updatedVariable.metadata?.associatedCompositeVariableIdToken) {
           logger.debug("VariableContext::reducer()[SET_VARIABLE] - Updating associated composite variable");
-          const associatedCompositeVariable = updatedVariableMap.get(updatedVariable.metadata.associatedCompositeVariableId);
+          const associatedCompositeVariable = updatedVariableMap.get(updatedVariable.metadata.associatedCompositeVariableIdToken.id);
           if (associatedCompositeVariable) {
             updateAssociatedSubvariableProperties({ variable: associatedCompositeVariable, subvariableId: updatedVariable.idToken.id, subVariableValue: action.value });
             updatedVariableMap.set(associatedCompositeVariable.idToken.id, associatedCompositeVariable);
@@ -293,6 +316,7 @@ export const VariableContext = createContext<VariableContextProps>({
 
   addVariable: (() => {}) as AddVariableFunction,
   batchAddVariable: (() => {}) as BatchAddVariableFunction,
+  setWholeVariable: (() => {}) as SetWholeVariableFunction,
   setVariable: (() => {}) as SetVariableFunction,
   setVariableProperty: (() => {}) as SetVariablePropertyFunction,
   batchSetVariableProperty: (() => {}) as BatchSetVariablePropertyFunction,
@@ -307,7 +331,6 @@ export const VariableContext = createContext<VariableContextProps>({
   getVariableSubgroupByName: () => [],
   getChildVariables: () => null,
   markVariablesHidden: (() => {}),
-  getVariablesArray: () => [],
   getClientAge: () => null,
 });
 
@@ -353,6 +376,10 @@ export const VariableProvider = ({ children, inContentBlockWrapperOptionsProvide
       variables.forEach((variable) => value.addVariable(variable, variableSetId));
     }) as BatchAddVariableFunction,
 
+    setWholeVariable: ((variable: Variable) => {
+      dispatch({ type: SET_WHOLE_VARIABLE, variable });
+    }) as SetWholeVariableFunction,
+
     setVariable: ((id: string, value: VariableValue) => {
       dispatch({ type: SET_VARIABLE, id, value });
     }) as SetVariableFunction,
@@ -369,13 +396,13 @@ export const VariableProvider = ({ children, inContentBlockWrapperOptionsProvide
       dispatch({ type: REMOVE_VARIABLE, id, documentId });
     }) as RemoveVariableFunction,
 
-    addVariableSet: (async (variableSet: VariableSet): Promise<void> => {
+    addVariableSet: (async (variableSet: VariableSet, bInIncludeAutoGeneratedVariables?: boolean): Promise<void> => {
       logger.debug("VariableContext::addVariableSet() - Adding variable set:", variableSet);
       const bExistingSet = state.variableSetMap.has(variableSet.idToken.id);
       return new Promise(async (resolve, reject) => {
         if (!bExistingSet) {
           try {
-            const variablesToAdd = await fetchVariablesFromSet(variableSet);
+            const variablesToAdd = await fetchVariablesFromSet(variableSet, bInIncludeAutoGeneratedVariables);
             const pendingVariableIds = new Set(variablesToAdd.map(v => v.idToken.id));
             value.batchAddVariable(variablesToAdd, variableSet.idToken.id);
             //variablesToAdd.forEach((variable) => value.addVariable(variable, variableSet.idToken.id));
@@ -504,19 +531,29 @@ export const VariableProvider = ({ children, inContentBlockWrapperOptionsProvide
       value.batchSetVariableProperty(ids, "metadata.visibility", updatedVisibility);
     }) as MarkVariablesHiddenFunction,
 
-    getVariablesArray(variableIds?: string[]): Variable[] {
+    /* Moved to standalone utility function
+    getVariablesArray(variableIds?: string[], bInIncludeAutoGeneratedVariables = true): Variable[] {
+      let variables: Variable[] = [];
+
       if (variableIds) {
-        return variableIds.map((id) => {
+        variableIds.map((id) => {
           const variable = state.variableMap.get(id);
           if (!variable) {
             throw Error(`VariableContext::getVariablesArray() - Variable with id ${id} not found`);
           }
-          return variable;
+          bInIncludeAutoGeneratedVariables ? variables.push(variable) : !variable.metadata?.bAutoGenerated && variables.push(variable);
         });
       } else {
-        return Array.from(state.variableMap.values());
+        if (bInIncludeAutoGeneratedVariables) {
+          variables = Array.from(state.variableMap.values());
+        } else {
+          variables = Array.from(state.variableMap.values()).filter((variable) => !variable.metadata?.bAutoGenerated);
+        }
       }
+
+      return variables;
     },
+    */
 
     getClientAge: () => {
       return getClientAgeHelper(state.variableMap);

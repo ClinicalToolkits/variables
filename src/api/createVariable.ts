@@ -8,7 +8,6 @@ export async function createVariable(variable: Variable) {
   try {
     const supabaseClient = getSupabaseClient();
     const dbVariable = convertVariableToDBVariable(variable);
-    dbVariable.id = generateUUID();
     logger.info('Creating dbVariable:', dbVariable);
 
     const { data, error } = await supabaseClient

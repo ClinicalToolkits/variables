@@ -33,3 +33,9 @@ export type SetVariableFunction = (id: string, value: VariableValue) => void;
 export type SetVariablePropertyFunction = (id: string, propertyPath: PathsToFields<Variable>, value: any) => void;
 
 export type BatchSetVariablePropertyFunction = (ids: string[], propertyPath: PathsToFields<Variable>, value: any) => void;
+
+/** Function type definition for setting the entire variable.
+ * @param {Variable} variable - The variable object to be set.
+ * @throws Will throw an error if variable is invalid.
+ */
+export type SetWholeVariableFunction = (variable: Variable) => void;

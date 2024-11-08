@@ -5,3 +5,4 @@ export * from "./getVariableProperty";
 export * from "./getVariableSubgroups";
 export * from "./shouldDisplayVariables";
 export * from "./automatedUpdates";
+export * from "./getVariablesArray";

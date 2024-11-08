@@ -4,8 +4,13 @@ import { InputFieldRegistryProvider, ThemeKeys, TooltipProvider, containerStyles
 import { createCTSupabaseClient, getSupabaseClient, logger, setSupabaseClient } from '@clinicaltoolkits/utility-functions';
 import { DescriptiveRatingTable, VariableProvider, VariableSetSelector, VariableTable, fetchVariableSets, useVariableContext, variableComponentRegistry, variableTypesWithTwoFields } from '../src/index';
 import { useEditor } from "@tiptap/react";
-import { ContentBlockWrapperOptionsProvider, defaultExtensions, InfoFieldNodeProvider } from '@clinicaltoolkits/content-blocks';
+import { contentBlockComponentRegistry, ContentBlockWrapperOptionsProvider, defaultExtensions, InfoFieldNodeProvider } from '@clinicaltoolkits/content-blocks';
 import { RichTextEditor as MantineRichTextEditor } from '@mantine/tiptap';
+
+const componentRegistry = {
+  ...variableComponentRegistry,
+  ...contentBlockComponentRegistry
+}
 
 interface TestContextWrapperProps {
   children?: ReactNode;  // Define children as an optional prop
@@ -20,7 +25,7 @@ export const TestContextWrapper: React.FC<TestContextWrapperProps> = ({ children
 
   return (
     <MantineProvider theme={themes[ThemeKeys.Default]} cssVariablesResolver={resolver(ThemeKeys.Default)} defaultColorScheme='auto'>
-      <InputFieldRegistryProvider registry={variableComponentRegistry} dataTypesWithTwoFields={variableTypesWithTwoFields}>
+      <InputFieldRegistryProvider registry={componentRegistry} dataTypesWithTwoFields={variableTypesWithTwoFields}>
         <TooltipProvider>
           <VariableProvider>
             <Test />
@@ -77,7 +82,7 @@ const Test: React.FC = () => {
 };
 */
 
-const bInitializeVariables = false;
+const bInitializeVariables = true;
 const Test: React.FC = () => {
   const [bInitialized, setInitialized] = React.useState(false);
   const { addVariableSet } = useVariableContext();
@@ -93,7 +98,7 @@ const Test: React.FC = () => {
 
   const handleInitializeVariables = async () => {
     if (bInitializeVariables) {
-      const variableSets = await fetchVariableSets();
+      const variableSets = await fetchVariableSets(["35398f77-ef43-413c-b630-90f0de73ab3b", "291d6752-0320-477f-9763-33e08758694b", "5ac2937c-39a5-4638-b510-f58a023e9d96"]);
       variableSets.forEach((variableSet) => {
         addVariableSet(variableSet);
       });

@@ -1,5 +1,6 @@
 import { Visibility, isVisible } from "@clinicaltoolkits/type-definitions";
 import { VariableMap, Variable } from "../../../types";
+import { logger } from "@clinicaltoolkits/utility-functions";
 
 export const shouldDisplayVariables = (variableIds: string[], variableMap: VariableMap) => {
   return variableIds.every((variableId) => {
@@ -7,7 +8,9 @@ export const shouldDisplayVariables = (variableIds: string[], variableMap: Varia
     return variable ? shouldDisplayVariable(variable) : false;
   });
 };
-/*export const shouldDisplayVariableSubgroup = (subgroupName?: string, section?: Section) => {
+
+/*
+export const shouldDisplayVariableSubgroup = (subgroupName?: string, section?: Section) => {
   if (!subgroupName) {
     return false;
   }
@@ -17,15 +20,17 @@ export const shouldDisplayVariables = (variableIds: string[], variableMap: Varia
   }
   // Default to false if the section or group is not found
   return false;
-};*/
+};
+*/
 
 export const shouldDisplayVariable = (variable: Variable) => {
   const bShouldDisplay = isVisible(variable.metadata?.visibility);
-  console.log("shouldDisplayVariable - ", "variable: ", variable, "bShouldDisplay: ", bShouldDisplay);
+  logger.debug("shouldDisplayVariable - variable: ", { variable, bShouldDisplay });
   return bShouldDisplay;
 };
 
-/*export const shouldDisplayVariable = (variable: Variable, section?: Section) => {
+/*
+export const shouldDisplayVariable = (variable: Variable, section?: Section) => {
   console.log("shouldDisplayVariable", variable?.key, section?.fullName);
   if (!section) {
     return false;
@@ -39,4 +44,5 @@ export const shouldDisplayVariable = (variable: Variable) => {
   }
 
   return shouldDisplayVariableSubgroup(variable?.subgroupTag?.name, section);
-};*/
+};
+*/

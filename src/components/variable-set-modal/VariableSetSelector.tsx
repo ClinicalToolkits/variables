@@ -15,7 +15,7 @@ export interface VariableSetSelectorProps {
   onVariableSetSelected?: (inSelectedVariableSetId: string) => void;
 }
 export const VariableSetSelector: React.FC<VariableSetSelectorProps> = ({ onVariableSetSelected }) => {
-  const { addVariableSet } = useVariableContext();
+  const { addVariableSet, setVariable } = useVariableContext();
   const [selectedVariableSet, setSelectedVariableSet] = useState<VariableSet | null>(null);
   const [variableSetComboboxData, setVariableSetComboboxData] = useState<ComboboxData[]>([]);
   const [bOpened, setOpened] = useState(false);
@@ -58,6 +58,7 @@ export const VariableSetSelector: React.FC<VariableSetSelectorProps> = ({ onVari
           //selectedVariableSet && <Button onClick={() => console.log("VariableSetSelector - Variables from set: ", getRelatedVariablesBySet(selectedVariableSet, true, true))} key={generateUUID()}>Log Variables</Button>, 
           <VariableResultsTable key={generateUUID()} selectedVariableSet={selectedVariableSet} />
         ]}
+        onVariableValueUpdated={setVariable}
       />
       <Anchor type='button' onClick={() => setOpened(!bOpened)} key={generateUUID()}>Variable Input Fields</Anchor>
     </div>

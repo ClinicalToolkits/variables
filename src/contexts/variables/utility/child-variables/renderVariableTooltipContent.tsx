@@ -2,40 +2,49 @@ import React from "react";
 import { Grid, Text } from "@mantine/core";
 import { convertAgeToAgeString, isHidden, isTypeAge } from "@clinicaltoolkits/type-definitions";
 import { getChildVariableIds, getVariableFullName, getVariableMetadata, getVariableValue, Variable } from "../../../../types";
-import { getVariableDescription, getVariableInterpretation } from "../../../../utility/getVariableContent";
-import { ContentBlockEditor, convertBlocksToTipTapDoc, defaultExtensions } from "@clinicaltoolkits/content-blocks";
+import { getContentBlocksFromVariableDescription, getContentBlocksFromVariableInterpretation } from "../../../../utility/getVariableContent";
+import { ContentBlockEditor } from "@clinicaltoolkits/content-blocks";
 import { Editor } from "@tiptap/react";
 
-export const renderVariableTooltipContent = (variable: Variable, data?: Map<string, Variable>, descriptionEditor?: Editor | null, interpretationEditor?: Editor | null): React.ReactElement | null => {
+export const renderVariableTooltipContent = (variable: Variable, data?: Map<string, Variable>, descriptionEditor?: Editor | null, interpretationEditor?: Editor | null, bInVerticalTooltipContent?: boolean): React.ReactElement | null => {
   //const metadata = resolveSubobjectConfigPath(item, fieldConfig.metadata);
-  const descriptionBlocks = getVariableDescription(variable);
-  const interpretationBlocks = data ? getVariableInterpretation(variable, data, true) : [];
+  const numColumns = bInVerticalTooltipContent ? 1 : 4;
+  const contentSpan = bInVerticalTooltipContent ? 1 : 3;
+  const maxWidth = bInVerticalTooltipContent ? "280px" : "450px";
+
+  const descriptionBlocks = getContentBlocksFromVariableDescription(variable);
+  const interpretationBlocks = data ? getContentBlocksFromVariableInterpretation(variable, data, true) : [];
 
   const childIds = getChildVariableIds(variable);
   const childVariableContent = renderChildVariableValues(data, variable.fullName, childIds);
 
+  const bRenderDescription = descriptionBlocks && descriptionBlocks.length > 0;
+  const bRenderInterpretation = interpretationBlocks && interpretationBlocks.length > 0;
+
+
+
   return (
-    <Grid columns={4} fz={"xs"} maw={"350px"}>
-      {descriptionBlocks && descriptionBlocks.length > 0 && (
+    <Grid columns={numColumns} fz={"xs"} maw={maxWidth}>
+      {bRenderDescription && (
         <>
           <Grid.Col span={1}>
             <Text fw={"bold"} fz={"xs"}>
               {"Description: "}
             </Text>
           </Grid.Col>
-          <Grid.Col span={3}>
+          <Grid.Col span={contentSpan}>
             <ContentBlockEditor inEditor={descriptionEditor} inContentBlocks={descriptionBlocks} />
           </Grid.Col>
         </>
       )}
-      {interpretationBlocks && interpretationBlocks.length > 0 && (
+      {bRenderInterpretation && (
         <>
           <Grid.Col span={1}>
             <Text fw={"bold"} fz={"xs"}>
               {"Interpretation: "}
             </Text>
           </Grid.Col>
-          <Grid.Col span={3}>
+          <Grid.Col span={contentSpan}>
             <ContentBlockEditor inEditor={interpretationEditor} inContentBlocks={interpretationBlocks} />
           </Grid.Col>
         </>

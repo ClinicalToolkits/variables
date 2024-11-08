@@ -1,6 +1,6 @@
 import { addUnique, isEmptyValue } from "@clinicaltoolkits/utility-functions";
 import { Variable, VariableMap, VariableSet } from "../types";
-import { getVariableSubgroupsToDisplay, shouldDisplayVariable } from "../contexts";
+import { getVariablesArray, getVariableSubgroupsToDisplay, shouldDisplayVariable } from "../contexts";
 import { Colour, HorizontalAlignment, RowFormatting, RowType, VerticalAlignment, ColumnFormatting, RowFormattingMap, ColumnFormattingMap } from "@clinicaltoolkits/type-definitions";
 
 const getRowFormatting = (headerColour?: string): Record<string, RowFormatting> => ({
@@ -9,6 +9,7 @@ const getRowFormatting = (headerColour?: string): Record<string, RowFormatting> 
     backgroundColour: headerColour || Colour.White,
     bold: true,
     fontColour: headerColour ? Colour.White : Colour.Black,
+    horizontalAlignment: HorizontalAlignment.Centered,
   },
   default: {
     rowType: RowType.DEFAULT,
@@ -243,26 +244,32 @@ export const generateFooterData = (variables: Variable[], enclosure: [string, st
   return footerData;
 };
 
+interface FilterVariableSetForTableProps {
+  inVariableSet: VariableSet;
+  inVariableMap: VariableMap;
+  bInRemoveUnusedVariableRows?: boolean;
+  bInUnifiedTable?: boolean;
+}
 interface FilterVariableSetForTableReturn {
   tableDataBySubgroup: Record<string, { tableDataVariables: Variable[], tableMetadata: VariableTableMetadata}>;
   variablesForFooter: Variable[];
 }
 
-export const filterVariableSetForTable = (variableSet: VariableSet, variableMap: VariableMap, getVariablesArray: (variableKeys?: string[] | undefined) => Variable[], bRemoveUnusedVariableRows = false, bUnifiedTable?: boolean): FilterVariableSetForTableReturn => {
+export const filterVariableSetForTable = ({ inVariableSet, inVariableMap, bInRemoveUnusedVariableRows = false, bInUnifiedTable }: FilterVariableSetForTableProps): FilterVariableSetForTableReturn => {
   const tableDataBySubgroup: Record<string, { tableDataVariables: Variable[], tableMetadata: VariableTableMetadata}> = {};
   const variablesForFooter: Variable[] = [];
 
-  if (bUnifiedTable) {
-    const variables = getVariablesArray(variableSet.variableIds.all);
-    const { tableDataVariables, tableFooterVariables, tableMetadata } = filterVariablesForTable(variables,  bRemoveUnusedVariableRows);
+  if (bInUnifiedTable) {
+    const variables = getVariablesArray({ inVariableMap: inVariableMap, inVariableIds: inVariableSet.variableIds.all });
+    const { tableDataVariables, tableFooterVariables, tableMetadata } = filterVariablesForTable(variables,  bInRemoveUnusedVariableRows);
     tableDataBySubgroup['all'] = { tableDataVariables, tableMetadata };
     variablesForFooter.push(...tableFooterVariables);
   } else {
-    const variableSubgroupsToDisplay = getVariableSubgroupsToDisplay(variableSet, variableMap);
+    const variableSubgroupsToDisplay = getVariableSubgroupsToDisplay(inVariableSet, inVariableMap);
 
     for (const [subgroupKey, variableKeys] of Object.entries(variableSubgroupsToDisplay)) {
-      const variables = getVariablesArray(variableKeys);
-      const { tableDataVariables, tableFooterVariables, tableMetadata } = filterVariablesForTable(variables, bRemoveUnusedVariableRows);
+      const variables = getVariablesArray({inVariableMap: inVariableMap, inVariableIds: variableKeys });
+      const { tableDataVariables, tableFooterVariables, tableMetadata } = filterVariablesForTable(variables, bInRemoveUnusedVariableRows);
       tableDataBySubgroup[subgroupKey] = { tableDataVariables, tableMetadata };
       variablesForFooter.push(...tableFooterVariables);
     }
@@ -276,8 +283,8 @@ export function groupVariablesByComposite(variables: Variable[]): Record<string,
   let standaloneVariables: Variable[] = [];
 
   variables.forEach(variable => {
-      if (variable.metadata?.associatedCompositeVariableId || variable.metadata?.associatedSubvariableIds?.length) {
-          const groupId = variable.metadata.associatedCompositeVariableId || variable.idToken.id;
+      if (variable.metadata?.associatedCompositeVariableIdToken || variable.metadata?.associatedSubvariableIds?.length) {
+          const groupId = variable.metadata.associatedCompositeVariableIdToken?.id || variable.idToken.id;
           if (!groups[groupId]) {
               groups[groupId] = [];
           }

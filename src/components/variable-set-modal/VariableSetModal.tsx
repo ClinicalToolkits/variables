@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
-import { ExtendedHoverCardProps, HeadingProps, InfoFieldModal } from "@clinicaltoolkits/universal-react-components";
+import { ExtendedHoverCardProps, HeadingProps, InfoFieldModal, useIsExtraSmallScreen, useIsSmallScreen } from "@clinicaltoolkits/universal-react-components";
 import { MantineSize } from "@mantine/core";
 import { InfoFieldClassNames, PathsToFields, RecordType } from "@clinicaltoolkits/type-definitions";
 import { getOptionalVariableSubgroups, handleAutoVariableUpdates, useSortAndGroupVariables, useVariableContext } from "../../contexts";
-import { Variable, VariableSet, getVariableInputConfig } from "../../types";
+import { SetVariableFunction, Variable, VariableSet, getVariableInputConfig } from "../../types";
 import { VariableCheckboxGroup } from "./VariableCheckboxGroup";
 import { ActionCheckboxProvider, ActionCheckboxes } from "./ActionCheckbox";
 import { useContentBlockWrapperOptions, useInfoFieldOptions, useRichTextEditor } from "@clinicaltoolkits/content-blocks";
@@ -19,7 +19,9 @@ export interface VariableSetModalProps {
   inputSize?: MantineSize;
   classNames?: {
     infoField?: InfoFieldClassNames;
-  }
+  };
+  onVariableValueUpdated: SetVariableFunction;
+  actionComponent?: React.ReactNode;
 }
 
 export const getObjectIdPathTest = <Variable extends RecordType>(): PathsToFields<Variable> => {
@@ -30,18 +32,23 @@ export const getObjectLabelPathTest = <Variable extends RecordType>(): PathsToFi
   return "abbreviatedName" as PathsToFields<Variable>;
 }
 
+export const variableDescriptionEditorId = "variableDescriptionEditor";
+export const variableInterpretationEditorId = "variableInterpretationEditor";
+
 /**
  * A modal that displays a list of variable sets as a dropdown and allows the user to select a variable set to display.
  * Once a variable set is selected, the modal will display the variables in the set as input fields.
  * Requires the VariableContextProvider to be a parent component and the variableMap and variableSetMap to be initialized.
  * @param titleChildren - Array of React nodes to display in the title section of the modal.
  */
-export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet, headingChildren = [], opened, onClose, headingProps, inputSize = "sm", classNames }) => {
+export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet, headingChildren = [], opened, onClose, headingProps, inputSize = "sm", classNames, onVariableValueUpdated, actionComponent }) => {
   const { updateGetObjectFunction, updateGetObjectDisplayNameFunction } = useInfoFieldOptions(); // TODO: Variables module should be self-contained, that means that the InfoFieldOptionsProvider needs to be placed inside the VariablesProvider (or we need to allow the user to optionally pass in the InfoFieldProvider to the VariablesProvider, in order to allow them more control over Provider placement and nesting)
   const { updateGetObjectMapFunction, updateGetObjectIdPathFunction, updateGetObjectLabelPathFunction } = useContentBlockWrapperOptions(); // TODO: Ditto
-  const { variableMap, setVariable } = useVariableContext();
-  const descriptionEditor = useRichTextEditor("variableDescriptionEditor", false);
-  const interpretationEditor = useRichTextEditor("variableInterpretationEditor", false);
+  const bVerticalTooltipContent = useIsSmallScreen();
+
+  const { variableMap } = useVariableContext();
+  const descriptionEditor = useRichTextEditor(variableDescriptionEditorId, false);
+  const interpretationEditor = useRichTextEditor(variableInterpretationEditorId, false);
 
   useEffect(() => {
     updateGetObjectIdPathFunction(getObjectIdPathTest);
@@ -69,8 +76,8 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
   const handleVariableUpdate = (id: string | number, propertyPath: PathsToFields<Variable>, value: any) => {
     if (typeof id !== "string") return;
     logger.debug("VariableSetModal - Variable updated, id: ", id + " propertyPath: " + propertyPath + " value: " + value);
-    setVariable(id, value);
-    handleAutoVariableUpdates(id, value, variableMap, setVariable);
+    onVariableValueUpdated(id, value);
+    handleAutoVariableUpdates(id, value, variableMap, onVariableValueUpdated);
   };
 
   const defaultHeadingProps: HeadingProps = {
@@ -99,6 +106,10 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
     closeDelay: 100,
     openDelay: 400,
     bInPinnable: true,
+    dropdownProps: {
+      // TODO: Would be better to set this in the MS Word Add-In as the only reason we need this max width is because the hover card is too wide for the Add-In's default opening width (which doesn't allow manual specification on opening).
+      //maw: "325px"
+    }
   }
 
   return (
@@ -110,10 +121,11 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
         headingProps={{...defaultHeadingProps, ...headingProps}}
         subgroupOrder={5}
         objectGroups={variableGroups}
-        infoFieldConfig={getVariableInputConfig(inputSize, variableMap, descriptionEditor, interpretationEditor, hoverCardProps)}
+        infoFieldConfig={getVariableInputConfig(inputSize, variableMap, descriptionEditor, interpretationEditor, hoverCardProps, bVerticalTooltipContent)}
         onUpdate={handleVariableUpdate}
         gap={0}
         classNames={infoFieldClassNames}
+        actionComponent={actionComponent}
       />
     </ActionCheckboxProvider>
   );

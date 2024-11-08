@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { InfoFieldObjectProperties } from '@clinicaltoolkits/universal-react-components';
 import { Button, Modal, Stack } from '@mantine/core';
-import { ObjectInfoConfig, PathsToFields, setValueByPath } from '@clinicaltoolkits/type-definitions';
-import { mergeUndefined, logger, capitalizeFirstLetter } from '@clinicaltoolkits/utility-functions';
-import { updateVariable, createVariable } from '../api';
-import { Variable, emptyVariable } from '../types';
+import { ComboboxData, convertObjectArrayToComboboxDataArray, entityRecords, generateUUID, ObjectInfoConfig, PathsToFields, setValueByPath, tags } from '@clinicaltoolkits/type-definitions';
+import { mergeUndefined, logger, capitalizeFirstLetter, isEmptyValue } from '@clinicaltoolkits/utility-functions';
+import { updateVariable, createVariable, fetchVariablesComboboxData } from '../api';
+import { Variable, emptyVariable, getVariableObjectConfig } from '../types';
+import { useUpsertVariableContent } from '../utility/getVariableContent'; // TODO: Circular dependency
+import { useRichTextEditor } from '@clinicaltoolkits/content-blocks';
+import { fetchDescriptiveRatingsComboboxData } from '../descriptive-ratings';
+
+const tagsComboboxData: ComboboxData[] = convertObjectArrayToComboboxDataArray({ array: Object.values(tags), idPath: 'id', labelPath: 'name' });
+const entitiesComboboxData: ComboboxData[] = convertObjectArrayToComboboxDataArray({array: Object.values(entityRecords), idPath: 'id', labelPath: 'abbreviatedName', searchTermsPath: 'name'});
+
+export const variableSuggestDescriptionEditorId = "variableSuggestDescriptionEditor";
+export const variableSuggestInterpretationEditorId = "variableSuggestInterpretationEditor";
 
 export type VariableUpdateProperties = Partial<Variable>;
 interface SectionModalProps {
@@ -13,39 +22,87 @@ interface SectionModalProps {
   variable: Variable | null;
   onVariableUpdated?: (updatedVariable: Variable) => void;
   mode?: 'create' | 'update';
-  variableObjectConfig: ObjectInfoConfig<Variable>;
 }
 
-export const VariableModal: React.FC<SectionModalProps> = ({ bOpened, onClose, variable, onVariableUpdated, mode = 'update', variableObjectConfig }) => {
+export const VariableModal: React.FC<SectionModalProps> = ({ bOpened, onClose, variable, onVariableUpdated, mode = 'update' }) => {
   const [selectedVariable, setSelectedVariable] = useState<Variable>(mergeUndefined(variable, emptyVariable));
+  const { upsertVariableContent } = useUpsertVariableContent();
+  const [descriptiveRatingSetComboxData, setDescriptiveRatingSetComboxData] = useState<ComboboxData[]>([]);
+  const [variablesComboboxData, setVariablesComboboxData] = useState<ComboboxData[]>([]);
+  const [bShowDescriptionBlock, setShowDescriptionBlock] = useState(selectedVariable.content?.bCreateDescription);
+  const [bShowInterpretationBlock, setShowInterpretationBlock] = useState(selectedVariable.content?.bCreateInterpretation);
+  console.log("bShowDescriptionBlock: ", bShowDescriptionBlock);
+  console.log("selectedVariable: ", selectedVariable);
+  const [variableObjectConfig, setVariableObjectConfig] = useState<ObjectInfoConfig<Variable>>(getVariableObjectConfig(tagsComboboxData, entitiesComboboxData, descriptiveRatingSetComboxData, variablesComboboxData));
+
+
+  const descriptionEditor = useRichTextEditor(variableSuggestDescriptionEditorId, true);
+  const interpretationEditor = useRichTextEditor(variableSuggestInterpretationEditorId, true);
+
+  const prepData = async () => {
+    let localDescriptiveRatingComboxData = await fetchDescriptiveRatingsComboboxData();
+    setDescriptiveRatingSetComboxData(localDescriptiveRatingComboxData);
+
+    const localVariablesComboboxData = await fetchVariablesComboboxData();
+    setVariablesComboboxData(localVariablesComboboxData);
+
+    setVariableObjectConfig(getVariableObjectConfig(tagsComboboxData, entitiesComboboxData, localDescriptiveRatingComboxData, localVariablesComboboxData, descriptionEditor, interpretationEditor, bShowDescriptionBlock, bShowInterpretationBlock));
+    console.log("descriptionEditor: ", descriptionEditor);
+    console.log("interpretationEditor: ", interpretationEditor);
+  };
+
+  useEffect(() => {
+    if (descriptionEditor && interpretationEditor && descriptionEditor?.isEditable && interpretationEditor?.isEditable) {
+      prepData();
+    }
+  }, [descriptionEditor, interpretationEditor, descriptionEditor?.isEditable, interpretationEditor?.isEditable, bShowDescriptionBlock, bShowInterpretationBlock]);
+  
+  useEffect(() => {
+    if (selectedVariable.content?.bCreateDescription !== bShowDescriptionBlock) setShowDescriptionBlock(selectedVariable.content?.bCreateDescription);
+    if (selectedVariable.content?.bCreateInterpretation !== bShowInterpretationBlock) setShowInterpretationBlock(selectedVariable.content?.bCreateInterpretation);
+  }, [selectedVariable.content?.bCreateDescription, selectedVariable.content?.bCreateInterpretation]);
 
   useEffect(() => {
     const newVariable = mergeUndefined(variable, emptyVariable);
+    if (!newVariable.idToken.variableId) newVariable.idToken.variableId = generateUUID();
     setSelectedVariable(newVariable);
   }, [variable, mode]);
 
   const handleSelectedVariableUpdate = (id: string | number, path: PathsToFields<Variable>, value: any) => {
     const updatedVariable = {...selectedVariable};
+    if (path === 'metadata.visibility' || path === "metadata.percentileRankVisibility" || path === "metadata.descriptiveRatingVisibility") value = parseInt(value);
+    else if (path === 'idToken.entityId') setValueByPath(updatedVariable, "associatedEntityAbbreviatedName", entityRecords[value].abbreviatedName);
+    //else if(path === 'content.bCreateDescription') setShowDescriptionBlock(value); // Handled in useEffect
+    //else if(path === 'content.bCreateInterpretation') setShowInterpretationBlock(value); // Handled in useEffect
     setValueByPath(updatedVariable, path, value);
     setSelectedVariable(updatedVariable);
+    console.log("updatedVariable: ", updatedVariable);
   };
 
+  // TODO: Currently, description and interpretation blocks can only be "not updated" (by setting corresponding checkbox to false), but deletion needs to occur manually in the database. Eventually move to a more robust solution.
   const handleSave = async () => {
     try {
       if (mode === 'update') {
         if (variable) {
-          await updateVariable(variable.idToken.id, selectedVariable);
+          if (selectedVariable?.content?.bCreateDescription) await upsertVariableContent(selectedVariable, 'descriptionBlock', descriptionEditor, mode);
+          if (selectedVariable?.content?.bCreateInterpretation) await upsertVariableContent(selectedVariable, 'interpretationBlock', interpretationEditor, mode);
+          await updateVariable(variable.idToken.databaseId, selectedVariable);
           onVariableUpdated?.(selectedVariable);
 
-          logger.debug("Updated variable: ", selectedVariable);
+          logger.log("Updated variable: ", selectedVariable);
         } else {
           logger.error("Variable is null. Cannot update variable.");
         }
       } else if (mode === 'create') {
+        if (!selectedVariable.idToken.variableId || isEmptyValue(selectedVariable.idToken.variableId)) throw new Error("Variable ID is empty. Cannot create variable.");
         await createVariable(selectedVariable);
+
+        if (selectedVariable?.content?.bCreateDescription) await upsertVariableContent(selectedVariable, 'descriptionBlock', descriptionEditor, mode);
+        if (selectedVariable?.content?.bCreateInterpretation) await upsertVariableContent(selectedVariable, 'interpretationBlock', interpretationEditor, mode);
+
         onVariableUpdated?.(selectedVariable);
 
-        logger.debug("Created new variable: ", selectedVariable);
+        logger.log("Created new variable: ", selectedVariable);
       }
 
       onClose();
@@ -59,7 +116,7 @@ export const VariableModal: React.FC<SectionModalProps> = ({ bOpened, onClose, v
     <Modal opened={bOpened} onClose={() => onClose()} title={`${mode.toUpperCase()} Variable`} closeOnClickOutside={false} fullScreen>
       <Stack w={"100%"} align='center'>
         { selectedVariable && <InfoFieldObjectProperties config={variableObjectConfig} data={selectedVariable} onUpdate={handleSelectedVariableUpdate} /> }
-        <Button onClick={() => {handleSave()}}>{`${capitalizeFirstLetter(mode)} Variable`}</Button>
+        <Button onClick={async () => {await handleSave()}}>{`${capitalizeFirstLetter(mode)} Variable`}</Button>
       </Stack>
     </Modal>
   );

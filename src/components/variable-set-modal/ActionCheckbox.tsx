@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { textStyles } from '@clinicaltoolkits/universal-react-components';
 import { Anchor, Checkbox, Stack, rem } from '@mantine/core';
-import { sortVariables, useVariableContext } from '../../contexts';
+import { getVariablesArray, sortVariables, useVariableContext } from '../../contexts';
 import { logger } from '@clinicaltoolkits/utility-functions';
 import { DataType, PathsToFields, State, createGenericContext } from '@clinicaltoolkits/type-definitions';
-import styles from "./styles.module.css";
 import { getOptionsMenuVariables } from '../../utility';
 import { Variable } from '../../types';
+import styles from "./styles.module.css";
 
 interface ActionCheckboxState extends State {
   owningId: string;
@@ -74,9 +74,9 @@ interface ActionCheckboxesProps {
 }
 
 export const ActionCheckboxes: React.FC<ActionCheckboxesProps> = ({ inIds, inOwningId }) => {
-  const { getVariablesArray, batchSetVariableProperty } = useVariableContext();
+  const { batchSetVariableProperty, variableMap } = useVariableContext();
   const { owningId, setOwningId, bShowAll, setShowAll } = useActionCheckboxContext();
-  const variables = getVariablesArray(inIds);
+  const variables = getVariablesArray({ inVariableMap: variableMap, inVariableIds: inIds });
   const actionCheckboxVariables = getOptionsMenuVariables({ variables, dataType: DataType.CHECKBOX });
   const sortedActionCheckboxVariables = sortVariables(actionCheckboxVariables);
   const actionCheckboxes: React.ReactNode[] = sortedActionCheckboxVariables.map((variable) => {

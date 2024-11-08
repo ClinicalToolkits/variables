@@ -42,6 +42,8 @@ export function convertDBVariableToVariable(dbVariable: DBVariable, entityId?: s
     inPrefixToApply: `${entityId}:${entityVersionId}`,
     inEnclosure: ['', ''],
   }
+  const associatedCompositeVariableId = metadata?.associatedCompositeVariableId ? variableIdToken.cloneWithChanges({ variableId: metadata.associatedCompositeVariableId }) : undefined;
+  console.log("associatedCompositeVariableId", associatedCompositeVariableId);
 
   const convertedVariable: Variable = {
     idToken: variableIdToken,
@@ -57,7 +59,7 @@ export function convertDBVariableToVariable(dbVariable: DBVariable, entityId?: s
     orderWithinSet: order_within_set,
     metadata: {
       ...metadata,
-      associatedCompositeVariableId: metadata?.associatedCompositeVariableId ? variableIdToken.cloneWithChanges({ variableId: metadata.associatedCompositeVariableId }).id : undefined,
+      associatedCompositeVariableIdToken: metadata?.associatedCompositeVariableId ? variableIdToken.cloneWithChanges({ variableId: metadata.associatedCompositeVariableId }) : undefined,
       associatedSubvariableProperties: metadata?.associatedSubvariableIds?.map((subvarId: string) => ({
         id: variableIdToken.cloneWithChanges({ variableId: subvarId }).id,
         key: variableIdToken.cloneWithChanges({ variableId: subvarId }).id,
@@ -120,7 +122,7 @@ const getDBVariableMetadataProperties = (metadata?: VariableMetadata | null): DB
     bCreateDescriptiveRating: getDBVariableMetadataProperty(metadata?.bCreateDescriptiveRating),
     bAutoCalculateDescriptiveRating: getDBVariableMetadataProperty(metadata?.bAutoCalculateDescriptiveRating),
     descriptiveRatingVisibility: getDBVariableMetadataProperty(metadata?.descriptiveRatingVisibility),
-    associatedCompositeVariableId: getDBVariableMetadataProperty(metadata?.associatedCompositeVariableId),
+    associatedCompositeVariableId: getDBVariableMetadataProperty(metadata?.associatedCompositeVariableIdToken?.databaseId),
     associatedSubvariableIds: getDBVariableMetadataProperty(metadata?.associatedSubvariableIds),
     bOptional: getDBVariableMetadataProperty(metadata?.bOptional),
     bIncludeInDynamicTable: getDBVariableMetadataProperty(metadata?.bIncludeInDynamicTable),

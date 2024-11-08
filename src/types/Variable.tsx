@@ -1,12 +1,11 @@
 import React, { useMemo } from "react";
-import { HoverCardProps, Text } from "@mantine/core";
-import { UUID, DataType, Tag, InfoFieldConfig, ComboboxData, ObjectInfoConfig, Age, emptyTag, asUUID, ID_SEPERATOR, UniversalIdToken } from "@clinicaltoolkits/type-definitions";
+import { UUID, DataType, Tag, InfoFieldConfig, ComboboxData, ObjectInfoConfig, Age, emptyTag, asUUID, ID_SEPERATOR, Visibility, convertEnumToComboboxDataArray, generateUUID } from "@clinicaltoolkits/type-definitions";
 import { DBVariableMetadata, VariableMetadata, emptyVariableMetadata } from "./VariableMetadata";
-import { ContentBlock, ContentBlockEditor, convertBlocksToTipTapDoc } from "@clinicaltoolkits/content-blocks";
-import { getVariableDescription } from "../utility/getVariableContent";
+import { AffixParams, TemplateBlock } from "@clinicaltoolkits/content-blocks";
 import { renderVariableTooltipContent } from "../contexts/variables/utility/child-variables/renderVariableTooltipContent";
 import { Editor } from "@tiptap/react";
 import { ExtendedHoverCardProps } from "@clinicaltoolkits/universal-react-components";
+import { RegexRuleArray } from "@clinicaltoolkits/utility-functions";
 
 export class VariableIdToken {
   variableId: string;
@@ -29,6 +28,10 @@ export class VariableIdToken {
 
   get databaseId(): UUID {
     return asUUID(this.variableId);
+  }
+
+  get prefix(): string {
+    return `${this.entityId}${ID_SEPERATOR}${this.entityVersionId}`;
   }
 }
 
@@ -89,7 +92,7 @@ export const getVariableFullName = (variable: Variable): string => variable.full
 export const getVariableValue = (variable: Variable): VariableValue => variable.value;
 export const getVariableMetadata = (variable: Variable): VariableMetadata | null | undefined => variable.metadata;
 export const emptyVariable: Variable = {
-  idToken: new VariableIdToken({ variableId: "", entityId: "", entityVersionId: "" }),
+  idToken: new VariableIdToken({ variableId: generateUUID(), entityId: undefined, entityVersionId: undefined }),
   fullName: "",
   abbreviatedName: "",
   label: "",
@@ -101,10 +104,14 @@ export const emptyVariable: Variable = {
   orderWithinSet: 0,
   metadata: emptyVariableMetadata,
   associatedEntityAbbreviatedName: "",
+  content: {
+    bCreateDescription: false,
+    bCreateInterpretation: false,
+  },
 };
 
 // Defines the configuration to be used when displaying the variable as an input element.
-export const getVariableInputConfig = (size?: string, mapTest?: Map<string, Variable>, descriptionEditor?: Editor | null, interpretationEditor?: Editor | null, hoverCardProps?: ExtendedHoverCardProps): InfoFieldConfig<Variable> => {
+export const getVariableInputConfig = (size?: string, mapTest?: Map<string, Variable>, descriptionEditor?: Editor | null, interpretationEditor?: Editor | null, hoverCardProps?: ExtendedHoverCardProps, bInVerticalTooltipContent?: boolean): InfoFieldConfig<Variable> => {
   return (
     {
       id: { path: "idToken.id" },
@@ -113,15 +120,24 @@ export const getVariableInputConfig = (size?: string, mapTest?: Map<string, Vari
       type: { path: "dataType" },
       metadata: { path: "metadata" },
       props: { size, hoverCard: hoverCardProps },
-      tooltipContent: (item?: Variable) => item && useMemo(() => {
-        return renderVariableTooltipContent(item, mapTest, descriptionEditor, interpretationEditor);
-      }, [item, mapTest]),
+      tooltipContent: (item?: Variable) => item && item.content && useMemo(() => {
+        return renderVariableTooltipContent(item, mapTest, descriptionEditor, interpretationEditor, bInVerticalTooltipContent);
+      }, [item, mapTest, bInVerticalTooltipContent]),
     }
   )
 };
 
 // Defines the configuration to be used when displaying a single variable as a form (e.g., for editing it's properties and/or creating new variables).
-export const getVariableObjectConfig = (tagsComboboxData: ComboboxData[], entitiesComboboxData: ComboboxData[], descriptiveRatingSetComboxData: ComboboxData[], variablesComboboxData: ComboboxData[]): ObjectInfoConfig<Variable> => (
+export const getVariableObjectConfig = (
+  tagsComboboxData: ComboboxData[],
+  entitiesComboboxData: ComboboxData[],
+  descriptiveRatingSetComboxData: ComboboxData[],
+  variablesComboboxData: ComboboxData[],
+  descriptionEditor?: Editor | null,
+  interpretationEditor?: Editor | null,
+  bInShowDescriptionBlock: boolean = true, 
+  bInShowInterpretationBlock: boolean = true
+): ObjectInfoConfig<Variable> => (
   [
     { id: "0", propertyPath: "fullName", displayName: "Full Name", type: "text" },
     { id: "1", propertyPath: "abbreviatedName", displayName: "Abbreviated Name", type: "text" },
@@ -129,21 +145,25 @@ export const getVariableObjectConfig = (tagsComboboxData: ComboboxData[], entiti
     { id: "4", propertyPath: "subgroupTag.id", displayName: "Subgroup Tag", type: "select", metadata: { options: tagsComboboxData } },
     { id: "5", propertyPath: "orderWithinSet", displayName: "Order Within Set", type: "number" },
     { id: "6", propertyPath: "tagIds", displayName: "Tag IDs", type: "multiSelect", metadata: { options: tagsComboboxData } },
-    { id: "7", propertyPath: "associatedEntityAbbreviatedName", displayName: "Associated Entity Abbreviated Name", type: "select",  metadata: { options: entitiesComboboxData } },
+    { id: "7", propertyPath: "idToken.entityId", displayName: "Associated Entity Abbreviated Name", type: "select",  metadata: { options: entitiesComboboxData } },
     { id: "8", propertyPath: "metadata.description", displayName: "Description", type: "textArea" },
     { id: "9", propertyPath: "metadata.descriptiveRatingId", displayName: "Descriptive Ratings", type: "select",  metadata: { options: descriptiveRatingSetComboxData } },
-    { id: "10", propertyPath: "metadata.associatedCompositeVariableId", displayName: "Associated Composite Variable", type: "select",  metadata: { options: variablesComboboxData } },
+    { id: "10", propertyPath: "metadata.associatedCompositeVariableIdToken.variableId", displayName: "Associated Composite Variable", type: "select",  metadata: { options: variablesComboboxData } },
     { id: "11", propertyPath: "metadata.associatedSubvariableIds", displayName: "Associated Subvariables", type: "multiSelect",  metadata: { options: variablesComboboxData } },
     { id: "12", propertyPath: "metadata.bNormallyDistributed", displayName: "Normally Distributed", type: "checkbox" },
-    { id: "13", propertyPath: "metadata.visibility", displayName: "Visibility", type: "checkbox" },
+    { id: "13", propertyPath: "metadata.visibility", displayName: "Visibility", type: "select", metadata: { options: convertEnumToComboboxDataArray(Visibility) } },
     { id: "14", propertyPath: "metadata.bOptional", displayName: "Optional", type: "checkbox" },
     { id: "15", propertyPath: "metadata.bCreatePercentileRank", displayName: "Create Percentile Rank", type: "checkbox" },
     { id: "16", propertyPath: "metadata.bAutoCalculatePercentileRank", displayName: "Auto Calculate Percentile Rank", type: "checkbox" },
-    { id: "17", propertyPath: "metadata.percentileRankVisibility", displayName: "Percentile Rank Visibility", type: "checkbox" },
+    { id: "17", propertyPath: "metadata.percentileRankVisibility", displayName: "Percentile Rank Visibility", type: "select", metadata: { options: convertEnumToComboboxDataArray(Visibility) } },
     { id: "18", propertyPath: "metadata.bCreateDescriptiveRating", displayName: "Create Descriptive Rating", type: "checkbox" },
     { id: "19", propertyPath: "metadata.bAutoCalculateDescriptiveRating", displayName: "Auto Calculate Descriptive Rating", type: "checkbox" },
-    { id: "20", propertyPath: "metadata.descriptiveRatingVisibility", displayName: "Descriptive Rating Visibility", type: "checkbox" },
+    { id: "20", propertyPath: "metadata.descriptiveRatingVisibility", displayName: "Descriptive Rating Visibility", type: "select", metadata: { options: convertEnumToComboboxDataArray(Visibility) } },
     { id: "21", propertyPath: "metadata.bIncludeInDynamicTable", displayName: "Include In Dynamic Table", type: "checkbox" },
+    { id: "22", propertyPath: "content.bCreateDescription", displayName: "Create Description", type: "checkbox" },
+    { id: "23", propertyPath: "content.descriptionBlock.blocks", displayName: "Description", type: "richText", metadata: { editor: descriptionEditor, visibility: bInShowDescriptionBlock ? Visibility.VISIBLE : Visibility.HIDDEN } },
+    { id: "24", propertyPath: "content.bCreateInterpretation", displayName: "Create Interpretation", type: "checkbox" },
+    { id: "25", propertyPath: "content.interpretationBlock.blocks", displayName: "Interpretation", type: "richText", metadata: { editor: interpretationEditor, visibility: bInShowInterpretationBlock ? Visibility.VISIBLE : Visibility.HIDDEN } },
   ]
 );
 
@@ -167,9 +187,14 @@ export function convertVariablesToComboboxData(variables: Variable[]): ComboboxD
 }
 
 export interface VariableContent {
-  [key: string]: ContentBlock[];
+  bCreateDescription?: boolean;
+  bCreateInterpretation?: boolean;
+  descriptionBlock?: TemplateBlock;
+  interpretationBlock?: TemplateBlock;
+  affixParams?: AffixParams;
+  regexRules?: RegexRuleArray;
+  //[key: string]: ContentBlock[] | undefined; // TODO: Check if removing this line is safe, removal was required to allow PathsToFields to not throw an error
 }
-
 
 /*export const getTooltipContentFromVariable = (item?: Variable): React.ReactNode => {
   const descriptionContent = item ? getVariableDescription(item) : [];
