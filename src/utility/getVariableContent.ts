@@ -72,7 +72,7 @@ export const useUpsertVariableContent = () => {
 };
 
 
-export const fetchVariableContent = async (inDbVariableId: string, property?: string, inAffixParams?: AffixParams, inRegexRules?: RegexRuleArray): Promise<VariableContent | undefined> => {
+export const fetchVariableContent = async (inDbVariableId: string, property?: string, inAffixParams?: AffixParams, inRegexRules?: RegexRuleArray, inEntityId?: string, inEntityVersionId?: string): Promise<VariableContent | undefined> => {
   const variableContent: VariableContent = {};
   const templateBlockIds: string[] = [];
   let query = getSupabaseClient()
@@ -82,6 +82,14 @@ export const fetchVariableContent = async (inDbVariableId: string, property?: st
   
   if (property) {
     query = query.eq("property", property);
+  }
+
+  if (inEntityId) {
+    query = query.or(`entity_id.eq.${inEntityId}, entity_id.is.null`);
+  }
+
+  if (inEntityVersionId) {
+    query = query.or(`entity_version_id.eq.${inEntityVersionId}, entity_version_id.is.null`);
   }
 
   const { data, error } = await query;

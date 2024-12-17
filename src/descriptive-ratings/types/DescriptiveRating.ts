@@ -1,4 +1,5 @@
 import { DataType, ObjectInfoConfig } from "@clinicaltoolkits/type-definitions";
+import { ReactNode } from "react";
 
 export interface DescriptiveRating {
   cutoffScore: number;
@@ -12,7 +13,7 @@ export const emptyDescriptiveRating: DescriptiveRating = {
     dataType: DataType.UNKNOWN,
 }
 
-export const getDescriptiveRatingObjectConfig = (): ObjectInfoConfig<DescriptiveRating> => {
+export const getDescriptiveRatingObjectConfig = (): ObjectInfoConfig<DescriptiveRating, ReactNode> => {
   return ([
     {
       id: "cutoffScore",

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { ReactNode, useMemo } from "react";
 import { UUID, DataType, Tag, InfoFieldConfig, ComboboxData, ObjectInfoConfig, Age, emptyTag, asUUID, ID_SEPERATOR, Visibility, convertEnumToComboboxDataArray, generateUUID } from "@clinicaltoolkits/type-definitions";
 import { DBVariableMetadata, VariableMetadata, emptyVariableMetadata } from "./VariableMetadata";
 import { AffixParams, TemplateBlock } from "@clinicaltoolkits/content-blocks";
@@ -111,7 +111,7 @@ export const emptyVariable: Variable = {
 };
 
 // Defines the configuration to be used when displaying the variable as an input element.
-export const getVariableInputConfig = (size?: string, mapTest?: Map<string, Variable>, descriptionEditor?: Editor | null, interpretationEditor?: Editor | null, hoverCardProps?: ExtendedHoverCardProps, bInVerticalTooltipContent?: boolean): InfoFieldConfig<Variable> => {
+export const getVariableInputConfig = (size?: string, mapTest?: Map<string, Variable>, descriptionEditor?: Editor | null, interpretationEditor?: Editor | null, hoverCardProps?: ExtendedHoverCardProps, bInVerticalTooltipContent?: boolean): InfoFieldConfig<Variable, ReactNode> => {
   return (
     {
       id: { path: "idToken.id" },
@@ -137,7 +137,7 @@ export const getVariableObjectConfig = (
   interpretationEditor?: Editor | null,
   bInShowDescriptionBlock: boolean = true, 
   bInShowInterpretationBlock: boolean = true
-): ObjectInfoConfig<Variable> => (
+): ObjectInfoConfig<Variable, ReactNode> => (
   [
     { id: "0", propertyPath: "fullName", displayName: "Full Name", type: "text" },
     { id: "1", propertyPath: "abbreviatedName", displayName: "Abbreviated Name", type: "text" },

@@ -4,11 +4,11 @@ import { AgeRangeInputElement, AgeInputElement, NumberInputElement, TextInputEle
 export const variableComponentRegistry = {
   ageRange: AgeRangeInputElement,
   [DataType.AGE]: AgeInputElement,
-  [DataType.STANDARD_SCORE]: NumberInputElement,
+  [DataType.STANDARD_SCORE]: TextInputElement,
   [DataType.SCALED_SCORE]: NumberInputElement,
   [DataType.T_SCORE]: NumberInputElement,
   [DataType.RAW_SCORE]: NumberInputElement,
-  [DataType.PERCENTILE_RANK]: NumberInputElement,
+  [DataType.PERCENTILE_RANK]: TextInputElement,
   [DataType.PERCENTILE_RANGE]: NumberRangeInputElement,
   [DataType.QUALITATIVE]: TextInputElement,
   [DataType.DESCRIPTOR]: SelectInputElement,

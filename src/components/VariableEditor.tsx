@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { InfoFieldObjectProperties } from '@clinicaltoolkits/universal-react-components';
 import { Button, Modal, Stack } from '@mantine/core';
 import { ComboboxData, convertObjectArrayToComboboxDataArray, entityRecords, generateUUID, ObjectInfoConfig, PathsToFields, setValueByPath, tags } from '@clinicaltoolkits/type-definitions';
@@ -33,7 +33,7 @@ export const VariableModal: React.FC<SectionModalProps> = ({ bOpened, onClose, v
   const [bShowInterpretationBlock, setShowInterpretationBlock] = useState(selectedVariable.content?.bCreateInterpretation);
   console.log("bShowDescriptionBlock: ", bShowDescriptionBlock);
   console.log("selectedVariable: ", selectedVariable);
-  const [variableObjectConfig, setVariableObjectConfig] = useState<ObjectInfoConfig<Variable>>(getVariableObjectConfig(tagsComboboxData, entitiesComboboxData, descriptiveRatingSetComboxData, variablesComboboxData));
+  const [variableObjectConfig, setVariableObjectConfig] = useState<ObjectInfoConfig<Variable, ReactNode>>(getVariableObjectConfig(tagsComboboxData, entitiesComboboxData, descriptiveRatingSetComboxData, variablesComboboxData));
 
 
   const descriptionEditor = useRichTextEditor(variableSuggestDescriptionEditorId, true);
