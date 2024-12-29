@@ -9,41 +9,41 @@ interface UseSortAndGroupVariablesProps {
 }
 
 export const useSortAndGroupVariables = (
-  variableSet?: VariableSet | null
+  variables?: Variable[] | null
 ): UseSortAndGroupVariablesProps => {
   const { variableMap, getChildVariables } = useVariableContext();
 
   return useMemo(() => {
-    if (!variableSet) {
+    if (!variables) {
       return {
         variableGroups: {},
       };
     }
 
-    const variableSubgroups = getVariableSubgroupsToDisplay(variableSet, variableMap);
+    //const variableSubgroups = getVariableSubgroupsToDisplay(variables, variableMap);
     const groupedAndSorted: Record<string, VariableMap> = {};
 
-    Object.values(variableSubgroups)
-      .flat()
-      .forEach((variableKey) => {
-        const variable = variableMap.get(variableKey);
-        if (!variable) return;
+    //Object.values(variableSubgroups)
+      //.flat()
+    variables.forEach((variable) => {
+      //const variable = variableMap.get(variableKey);
+      if (!variable) return;
 
-        const subgroupName = getSubgroupNameForVariable(variable); // Define this function based on your business logic
-        if (!groupedAndSorted[subgroupName]) {
-          groupedAndSorted[subgroupName] = new Map<string, Variable>();
-        }
+      const subgroupName = getSubgroupNameForVariable(variable); // Define this function based on your business logic
+      if (!groupedAndSorted[subgroupName]) {
+        groupedAndSorted[subgroupName] = new Map<string, Variable>();
+      }
 
-        const isChildVariable = variable?.metadata?.properties?.childVariable?.parentVariableId !== undefined;
-        if (isChildVariable) return;
+      const isChildVariable = variable?.metadata?.properties?.childVariable?.parentVariableId !== undefined;
+      if (isChildVariable) return;
 
-        groupedAndSorted[subgroupName].set(variable.idToken.id, variable);
+      groupedAndSorted[subgroupName].set(variable.idToken.id, variable);
 
-        const childVariables = getChildVariables(variable);
-        childVariables?.forEach(childVariable => {
-          groupedAndSorted[subgroupName].set(childVariable.idToken.id, childVariable);
-        });
+      const childVariables = getChildVariables(variable);
+      childVariables?.forEach(childVariable => {
+        groupedAndSorted[subgroupName].set(childVariable.idToken.id, childVariable);
       });
+    });
 
     // Optionally sort groups by the order within each group
     Object.keys(groupedAndSorted).forEach(groupName => {
@@ -68,7 +68,7 @@ export const useSortAndGroupVariables = (
     return {
       variableGroups: groupedAndSorted,
     };
-  }, [variableSet, variableMap, getChildVariables]);
+  }, [variables, getChildVariables]);
 };
 
 export const sortVariables = (variables: Variable[]): Variable[] => {

@@ -11,7 +11,8 @@ import { logger } from "@clinicaltoolkits/utility-functions";
 import styles from "./styles.module.css";
 
 export interface VariableSetModalProps {
-  variableSet?: VariableSet | null;
+  title: string;
+  variables?: Variable[] | null;
   headingChildren?: React.ReactNode[];
   opened: boolean;
   onClose: () => void;
@@ -41,7 +42,7 @@ export const variableInterpretationEditorId = "variableInterpretationEditor";
  * Requires the VariableContextProvider to be a parent component and the variableMap and variableSetMap to be initialized.
  * @param titleChildren - Array of React nodes to display in the title section of the modal.
  */
-export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet, headingChildren = [], opened, onClose, headingProps, inputSize = "sm", classNames, onVariableValueUpdated, actionComponent }) => {
+export const VariableSetModal: React.FC<VariableSetModalProps> = ({ title = "Variable Set Viewer", variables, headingChildren = [], opened, onClose, headingProps, inputSize = "sm", classNames, onVariableValueUpdated, actionComponent }) => {
   const { updateGetObjectFunction, updateGetObjectDisplayNameFunction } = useInfoFieldOptions(); // TODO: Variables module should be self-contained, that means that the InfoFieldOptionsProvider needs to be placed inside the VariablesProvider (or we need to allow the user to optionally pass in the InfoFieldProvider to the VariablesProvider, in order to allow them more control over Provider placement and nesting)
   const { updateGetObjectMapFunction, updateGetObjectIdPathFunction, updateGetObjectLabelPathFunction } = useContentBlockWrapperOptions(); // TODO: Ditto
   const bVerticalTooltipContent = useIsSmallScreen();
@@ -72,7 +73,7 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
     updateGetObjectMapFunction(() => variableMap);
   }, [variableMap]);
 
-  const { variableGroups } = useSortAndGroupVariables(variableSet);
+  const { variableGroups } = useSortAndGroupVariables(variables);
   const handleVariableUpdate = (id: string | number, propertyPath: PathsToFields<Variable>, value: any) => {
     if (typeof id !== "string") return;
     logger.debug("VariableSetModal - Variable updated, id: ", id + " propertyPath: " + propertyPath + " value: " + value);
@@ -82,12 +83,12 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
 
   const defaultHeadingProps: HeadingProps = {
     headingProps: { order: 4, ta: "left" },
-    headingText: variableSet?.label ? variableSet.label : "Variable Set Viewer",
+    headingText: title,
     bPaper: true,
     children: [
       headingChildren,
-      variableSet && <VariableCheckboxGroup key={headingChildren.length} subgroups={getOptionalVariableSubgroups(variableSet)} />,
-      variableSet && <ActionCheckboxes key={variableSet.idToken.id} inOwningId={variableSet.idToken.id} inIds={variableSet.variableIds.all} />,
+      //variables && <VariableCheckboxGroup key={headingChildren.length} subgroups={getOptionalVariableSubgroups(variableSet)} />,
+      //variables && <ActionCheckboxes key={variableSet.idToken.id} inOwningId={variableSet.idToken.id} inIds={variableSet.variableIds.all} />,
     ],
     classNames: {
       root: styles.headingRoot,
