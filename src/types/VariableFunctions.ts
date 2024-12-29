@@ -8,7 +8,7 @@ import { Variable, VariableValue } from "./Variable";
  * @throws Will throw an error if variable or label is invalid.
  */
 export type AddVariableFunction = (variable: Variable, variableSubsetKey?: string) => void;
-export type BatchAddVariableFunction = (variables: Variable[], variableSubsetKey?: string) => void;
+export type BatchAddVariableFunction = (variables: Variable[], variableSubsetKey?: string) => Promise<void>;
 
 /**
  * Function type definition for removing a variable.

@@ -23,7 +23,7 @@ const convertActionParamIds = (actionParams: { name: string, label?: string, [ke
   return convertedActionParamIds;
 };
 
-export function convertDBVariableToVariable(dbVariable: DBVariable, entityId?: string, entityVersionId?: string, labelPrefix?: string, variableSetParams?: FetchVariablesParams['variableSetParams']): Variable {
+export function convertDBVariableToVariable(dbVariable: DBVariable, entityId?: string, entityVersionId?: string, labelPrefix?: string, variableSetId?: string): Variable {
   const {
     id,
     full_name,
@@ -51,7 +51,7 @@ export function convertDBVariableToVariable(dbVariable: DBVariable, entityId?: s
     fullName: full_name,
     abbreviatedName: abbreviated_name,
     label: labelPrefix || associated_entity_abbreviated_name ? `${labelPrefix || associated_entity_abbreviated_name} - ${full_name}` : full_name,
-    variableSetId: variableSetParams?.idToken.id,
+    variableSetId: variableSetId,
     tagIds: tag_ids,
     tags: tags,
     dataType: data_type,
