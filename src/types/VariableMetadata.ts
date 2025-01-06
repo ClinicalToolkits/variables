@@ -1,6 +1,6 @@
-import { Age, AgeRangeString, AssociatedSubobjectProperties, PathsToFields, RowType, Visibility } from "@clinicaltoolkits/type-definitions";
+import { Age, AgeRangeString, AssociatedSubobjectProperties, PathsToFields, Visibility } from "@clinicaltoolkits/type-definitions";
 import { DescriptiveRating } from "../descriptive-ratings/types/DescriptiveRating";
-import { ContentBlock, getTextFromContentBlock } from "@clinicaltoolkits/content-blocks";
+import { ContentBlock, getTextFromContentBlock, RowType } from "@clinicaltoolkits/content-blocks";
 import { Variable, VariableIdToken } from "./Variable";
 
 // TODO: A large swath of these properties are not being used. We should consider removing them.

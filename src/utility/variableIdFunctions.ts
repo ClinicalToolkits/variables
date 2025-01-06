@@ -1,13 +1,13 @@
 import { isValidUUID, ID_SEPERATOR, REPEATING_UUID_REGEX_PATTERN, getObjectPropertyFromKeyPath } from "@clinicaltoolkits/type-definitions";
 import { createReplacementFunction, logger, RegexRule, RegexRuleArray } from "@clinicaltoolkits/utility-functions";
 import { DEMOGRAPHICS, USER_INFORMATION, DEMOGRAPHICS_PREFIX, USER_INFORMATION_PREFIX, getVariableIdFromString, VariableMap } from "../types";
-import { AffixParams } from "@clinicaltoolkits/content-blocks";
+import { IAffixParams } from "@clinicaltoolkits/content-blocks";
 
 // TODO: Consider if this isn't better conceptualized as utility functions for content blocks (i.e., focus on id replacement, rather than variable id replacement)
 const demographicsUuids: string[] = Object.values(DEMOGRAPHICS);
 const userUuids: string[] = Object.values(USER_INFORMATION);
 
-const appendPrefixToVariablesReplacement = (args: AffixParams) => {
+const appendPrefixToVariablesReplacement = (args: IAffixParams) => {
   const { inPrefixToApply, inEnclosure } = args;
 
   return createReplacementFunction({
@@ -29,7 +29,7 @@ const appendPrefixToVariablesReplacement = (args: AffixParams) => {
     enclosure: inEnclosure,
   });
 };
-export const appendPrefixToVariablesRule = (args: AffixParams): RegexRule => {
+export const appendPrefixToVariablesRule = (args: IAffixParams): RegexRule => {
   return {
     pattern: REPEATING_UUID_REGEX_PATTERN(args?.inEnclosure),
     replacement: appendPrefixToVariablesReplacement({ ...args }),
@@ -40,7 +40,7 @@ export const appendPrefixToVariablesRule = (args: AffixParams): RegexRule => {
   }
 };
 
-const removePrefixesFromVariablesReplacement = (args: AffixParams) => {
+const removePrefixesFromVariablesReplacement = (args: IAffixParams) => {
   const { inEnclosure } = args;
 
   return createReplacementFunction({
@@ -57,7 +57,7 @@ const removePrefixesFromVariablesReplacement = (args: AffixParams) => {
     enclosure: inEnclosure,
   });
 };
-export const removePrefixesFromVariablesRule = (args: AffixParams): RegexRule => {
+export const removePrefixesFromVariablesRule = (args: IAffixParams): RegexRule => {
   const { inPrefixToRemove, inEnclosure } = args;
 
   return {
@@ -70,7 +70,7 @@ export const removePrefixesFromVariablesRule = (args: AffixParams): RegexRule =>
   }
 };
 
-const appendSuffixToVariablesReplacement = (args: AffixParams) => {
+const appendSuffixToVariablesReplacement = (args: IAffixParams) => {
   const { inSuffixToApply, inEnclosure } = args;
 
   return createReplacementFunction({
@@ -84,7 +84,7 @@ const appendSuffixToVariablesReplacement = (args: AffixParams) => {
     enclosure: inEnclosure,
   });
 };
-export const appendSuffixToVariablesRule = (args: AffixParams): RegexRule => {
+export const appendSuffixToVariablesRule = (args: IAffixParams): RegexRule => {
   const { inEnclosure } = args;
 
   return {
@@ -97,7 +97,7 @@ export const appendSuffixToVariablesRule = (args: AffixParams): RegexRule => {
   }
 };
 
-const removeSuffixFromVariablesReplacement = (args: AffixParams) => {
+const removeSuffixFromVariablesReplacement = (args: IAffixParams) => {
   const { inEnclosure } = args;
 
   return createReplacementFunction({
@@ -111,7 +111,7 @@ const removeSuffixFromVariablesReplacement = (args: AffixParams) => {
     enclosure: inEnclosure,
   });
 };
-export const removeSuffixFromVariablesRule = (args: AffixParams): RegexRule => {
+export const removeSuffixFromVariablesRule = (args: IAffixParams): RegexRule => {
   const { inEnclosure } = args;
 
   return {
@@ -124,7 +124,7 @@ export const removeSuffixFromVariablesRule = (args: AffixParams): RegexRule => {
   }
 };
 
-export const getVariableAffixRules = ({ inPrefixToApply, inPrefixToRemove, inSuffixToApply, inSuffixToRemove, inEnclosure }: AffixParams): RegexRuleArray => {
+export const getVariableAffixRules = ({ inPrefixToApply, inPrefixToRemove, inSuffixToApply, inSuffixToRemove, inEnclosure }: IAffixParams): RegexRuleArray => {
   const rules: RegexRuleArray = [];
   if (inPrefixToApply) {
     rules.push(appendPrefixToVariablesRule);

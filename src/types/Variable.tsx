@@ -1,7 +1,7 @@
 import React, { ReactNode, useMemo } from "react";
 import { UUID, DataType, Tag, InfoFieldConfig, ComboboxData, ObjectInfoConfig, Age, emptyTag, asUUID, ID_SEPERATOR, Visibility, convertEnumToComboboxDataArray, generateUUID } from "@clinicaltoolkits/type-definitions";
 import { DBVariableMetadata, VariableMetadata, emptyVariableMetadata } from "./VariableMetadata";
-import { AffixParams, TemplateBlock } from "@clinicaltoolkits/content-blocks";
+import { IAffixParams, ITemplateBlock } from "@clinicaltoolkits/content-blocks";
 import { renderVariableTooltipContent } from "../contexts/variables/utility/child-variables/renderVariableTooltipContent";
 import { Editor } from "@tiptap/react";
 import { ExtendedHoverCardProps } from "@clinicaltoolkits/universal-react-components";
@@ -189,9 +189,9 @@ export function convertVariablesToComboboxData(variables: Variable[]): ComboboxD
 export interface VariableContent {
   bCreateDescription?: boolean;
   bCreateInterpretation?: boolean;
-  descriptionBlock?: TemplateBlock;
-  interpretationBlock?: TemplateBlock;
-  affixParams?: AffixParams;
+  descriptionBlock?: ITemplateBlock;
+  interpretationBlock?: ITemplateBlock;
+  affixParams?: IAffixParams;
   regexRules?: RegexRuleArray;
   //[key: string]: ContentBlock[] | undefined; // TODO: Check if removing this line is safe, removal was required to allow PathsToFields to not throw an error
 }

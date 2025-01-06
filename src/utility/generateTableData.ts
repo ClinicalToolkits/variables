@@ -1,7 +1,8 @@
-import { addUnique, isEmptyValue } from "@clinicaltoolkits/utility-functions";
+import { addUnique, capitalizeFirstLetter, isEmptyValue } from "@clinicaltoolkits/utility-functions";
 import { Variable, VariableMap, VariableSet } from "../types";
 import { getVariablesArray, getVariableSubgroupsToDisplay, shouldDisplayVariable } from "../contexts";
-import { Colour, HorizontalAlignment, RowFormatting, RowType, VerticalAlignment, ColumnFormatting, RowFormattingMap, ColumnFormattingMap } from "@clinicaltoolkits/type-definitions";
+import { Colour, HorizontalAlignment, VerticalAlignment } from "@clinicaltoolkits/type-definitions";
+import { ColumnFormattingMap, RowFormatting, RowFormattingMap, RowType } from "@clinicaltoolkits/content-blocks";
 
 const getRowFormatting = (headerColour?: string): Record<string, RowFormatting> => ({
   header: {
@@ -301,3 +302,18 @@ export function groupVariablesByComposite(variables: Variable[]): Record<string,
 
   return groups;
 }
+
+export const getTableTitle = (baseTitle: string, variables: Variable[], bUnifiedTable = false): string => {
+  let title = baseTitle;
+
+  if (!bUnifiedTable && variables[0]?.subgroupTag) {
+    const subTitle = capitalizeFirstLetter(
+      variables[0].subgroupTag?.metadata?.pluralName ?? `${variables[0].subgroupTag?.name}s`,
+      true
+    );
+
+    title += ` - ${subTitle}`;
+  }
+
+  return title;
+};

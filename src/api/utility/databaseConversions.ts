@@ -4,9 +4,9 @@ import { getAbbreviatedVariablePlaceholder, getVariablePlaceholder } from "./get
 import { RegexRuleArray, batchApplyRegexRules, isEmptyValue, isStringArray, logger } from "@clinicaltoolkits/utility-functions";
 import { DBVariable, DBVariableMetadata, Variable, VariableIdToken, VariableMetadata } from "../../types";
 import { appendPrefixToVariablesRule, removePrefixesFromVariablesRule } from "../../utility";
-import { AffixParams } from "@clinicaltoolkits/content-blocks";
+import { IAffixParams } from "@clinicaltoolkits/content-blocks";
 
-const convertActionParamIds = (actionParams: { name: string, label?: string, [key: string]: any }, rules: RegexRuleArray, affixParams?: AffixParams): { name: string, [key: string]: any } => {
+const convertActionParamIds = (actionParams: { name: string, label?: string, [key: string]: any }, rules: RegexRuleArray, affixParams?: IAffixParams): { name: string, [key: string]: any } => {
   logger.debug("convertActionParamIds - Input", actionParams);
   const convertedActionParamIds = Object.entries(actionParams).reduce((acc, [key, value]) => {
     if (key === "ids" && isStringArray(value)) {
@@ -38,7 +38,7 @@ export function convertDBVariableToVariable(dbVariable: DBVariable, entityId?: s
 
   const tags: Tag[] = tag_ids?.map((tagId) => tagsRecord[tagId]) ?? [];
   const variableIdToken = new VariableIdToken({ variableId: id, entityId, entityVersionId });
-  const affixParams: AffixParams = {
+  const affixParams: IAffixParams = {
     inPrefixToApply: `${entityId}:${entityVersionId}`,
     inEnclosure: ['', ''],
   }
@@ -107,7 +107,7 @@ export function convertVariablePropertiesToDB(variable: Partial<Variable>): Part
 const getDBVariableMetadataProperties = (metadata?: VariableMetadata | null): DBVariableMetadata | undefined => {
   if (isEmptyValue(metadata)) return undefined;
 
-  const affixParams: AffixParams = {
+  const affixParams: IAffixParams = {
     inEnclosure: CURLY_BRACE_ENCLOSURE,
   }
 

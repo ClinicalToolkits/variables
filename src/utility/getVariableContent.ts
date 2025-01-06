@@ -1,5 +1,5 @@
 import {
-  AffixParams,
+  IAffixParams,
   batchFetchTemplateBlock,
   ContentBlock,
   convertInfoFieldNodesToPlaceholders,
@@ -11,7 +11,7 @@ import {
   isConditionalBlock,
   isTemplateBlock,
   removePrefixesFromVariablesRule,
-  TemplateBlock,
+  ITemplateBlock,
   upsertTemplateBlock
 } from "@clinicaltoolkits/content-blocks";
 import { Variable, VariableContent, VariableMap } from "../types";
@@ -32,14 +32,14 @@ export const useUpsertVariableContent = () => {
       return;
     }
     console.log("inVariable: ", inVariable);
-    let templateBlock: TemplateBlock;
+    let templateBlock: ITemplateBlock;
 
     // Convert info field nodes to placeholders in the specified editor
     convertInfoFieldNodesToPlaceholders(editor);
     const updatedBlocks = convertTipTapJSONToBlocks(editor?.getJSON());
 
     // Set up regex rules and parameters
-    const affixParams: AffixParams = {
+    const affixParams: IAffixParams = {
       inEnclosure: CURLY_BRACE_ENCLOSURE,
       inPrefixToRemove: inVariable.idToken.prefix,
     };
@@ -72,7 +72,7 @@ export const useUpsertVariableContent = () => {
 };
 
 
-export const fetchVariableContent = async (inDbVariableId: string, property?: string, inAffixParams?: AffixParams, inRegexRules?: RegexRuleArray, inEntityId?: string, inEntityVersionId?: string): Promise<VariableContent | undefined> => {
+export const fetchVariableContent = async (inDbVariableId: string, property?: string, inAffixParams?: IAffixParams, inRegexRules?: RegexRuleArray, inEntityId?: string, inEntityVersionId?: string): Promise<VariableContent | undefined> => {
   const variableContent: VariableContent = {};
   const templateBlockIds: string[] = [];
   let query = getSupabaseClient()
@@ -119,7 +119,7 @@ export const fetchVariableContent = async (inDbVariableId: string, property?: st
   return bEmptyObject ? undefined : variableContent;
 };
 
-export const fetchVariableDescription = async (inDbVariableId: string): Promise<TemplateBlock | undefined> => {
+export const fetchVariableDescription = async (inDbVariableId: string): Promise<ITemplateBlock | undefined> => {
   const variableContent = await fetchVariableContent(inDbVariableId, "description");
   return variableContent?.descriptionBlock;
 };
@@ -164,7 +164,7 @@ export const getContentBlocksFromVariableInterpretation = (inVariable: Variable,
 
   const conditionalBlock = interpretationBlocks[0];
   if (!isConditionalBlock(conditionalBlock)) throw Error("getVariableInterpretation() - Content block at index 0 is not a conditional block. All interpretation blocks must be contained inside a conditional block.");
-  const conditionalSubBlocks = getSubBlocksFromConditionalBlock(conditionalBlock, variableMap, bRemoveUnusedContentControls, shouldDisplayVariable);
+  const conditionalSubBlocks = getSubBlocksFromConditionalBlock({ conditionalBlock, objectMap: variableMap, bRemoveUnusedContentControls, shouldDisplayObjectContent: shouldDisplayVariable });
   return conditionalSubBlocks;
 }
 

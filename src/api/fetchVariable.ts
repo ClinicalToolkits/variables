@@ -5,7 +5,7 @@ import { convertDBVariableToVariable, enrichSubvariableProperties, createAutoGen
 import { fetchDescriptiveRatingsArray, DescriptiveRating } from "../descriptive-ratings";
 import { Variable, DBVariable, VariableIdToken, VariableContent, DEMOGRAPHICS } from "../types";
 import { fetchVariableContent, getVariableAffixRules, getVariableDescriptionAsString, setVariableContent } from "../utility";
-import { AffixParams } from "@clinicaltoolkits/content-blocks";
+import { IAffixParams } from "@clinicaltoolkits/content-blocks";
 import { autoSetClientLocationFromUser } from "../contexts";
 
 export interface FetchVariableParams {
@@ -80,7 +80,7 @@ export const fetchVariables = async ({
 
       let additionalAccPromises: Promise<void>[] = [];
       const variableIdToContentMap = new Map<string, VariableContent>();
-      const variableContentAffixParams: AffixParams = {
+      const variableContentAffixParams: IAffixParams = {
         inPrefixToApply: (entityId && entityVersionId) ? `${entityId}:${entityVersionId}` : undefined,
         inEnclosure: CURLY_BRACE_ENCLOSURE
       }
