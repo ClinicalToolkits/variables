@@ -98,7 +98,7 @@ const Test: React.FC = () => {
 
   const handleInitializeVariables = async () => {
     if (bInitializeVariables) {
-      const variableSets = await fetchVariableSets(["35398f77-ef43-413c-b630-90f0de73ab3b", "291d6752-0320-477f-9763-33e08758694b", "5ac2937c-39a5-4638-b510-f58a023e9d96"]);
+      const variableSets = await fetchVariableSets(["7c7576d4-704f-4a8a-aff3-793aea573e07", "5ac2937c-39a5-4638-b510-f58a023e9d96"]);
       variableSets.forEach((variableSet) => {
         addVariableSet(variableSet);
       });

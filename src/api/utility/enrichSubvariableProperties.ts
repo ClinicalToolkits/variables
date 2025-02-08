@@ -2,6 +2,7 @@ import { Variable } from "../../types";
 
 export const enrichSubvariableProperties = (variable: Variable, variables: Variable[]) => {
   if (variable.metadata?.associatedSubvariableProperties) {
+    console.log("variable: ", variable);
     // Map through each associatedSubvariable to update its properties
     const enrichedSubvariables = variable.metadata.associatedSubvariableProperties.map(subvariableProperty => {
       // Find the subvariable in finalData using the enriched subvar's id

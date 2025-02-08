@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { GenericTable, GenericTableProps } from "@clinicaltoolkits/universal-react-components";
 import { Button, Container, useMantineTheme } from "@mantine/core";
-import { VariableModal } from "./VariableEditor";
+import { VariableModal } from "./VariableModal";
 import { convertObjectArrayToComboboxDataArray, tags, ObjectInfoConfig, ComboboxData, entityRecords } from "@clinicaltoolkits/type-definitions";
 import { fetchVariables, fetchVariablesComboboxData } from "../api";
 import { Variable, getVariableObjectConfig, convertVariablesToComboboxData, SetWholeVariableFunction } from "../types";

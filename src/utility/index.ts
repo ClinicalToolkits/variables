@@ -9,3 +9,4 @@ export * from "./getVariableValueAsString";
 export * from "./areVariablesCompleted";
 export * from "./optionsMenuVariables";
 export * from "./getVariableContent";
+export * from "./getRandomVariableValue";

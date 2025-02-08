@@ -1,6 +1,8 @@
 import { isValidUUID, ID_SEPERATOR, REPEATING_UUID_REGEX_PATTERN, getObjectPropertyFromKeyPath } from "@clinicaltoolkits/type-definitions";
 import { createReplacementFunction, logger, RegexRule, RegexRuleArray } from "@clinicaltoolkits/utility-functions";
-import { DEMOGRAPHICS, USER_INFORMATION, DEMOGRAPHICS_PREFIX, USER_INFORMATION_PREFIX, getVariableIdFromString, VariableMap } from "../types";
+import { DEMOGRAPHICS_PREFIX, USER_INFORMATION_PREFIX, getVariableIdFromString, VariableMap } from "../types";
+import { USER_INFORMATION } from "../types/variable-ids/USER_INFORMATION"; // Potential circular dependency
+import { DEMOGRAPHICS } from "../types/variable-ids/DEMOGRAPHICS"; // Potential circular dependency
 import { IAffixParams } from "@clinicaltoolkits/content-blocks";
 
 // TODO: Consider if this isn't better conceptualized as utility functions for content blocks (i.e., focus on id replacement, rather than variable id replacement)

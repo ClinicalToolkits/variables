@@ -5,7 +5,7 @@ export { MABC } from "./MABC";
 export { CLASSROOM_INFORMATION } from "./CLASSROOM_INFORMATION";
 export { WIAT } from "./WIAT";
 export { WISC } from "./WISC";
-export * from "./DEMOGRAPHICS";
+export { DEMOGRAPHICS, DEMOGRAPHICS_PREFIX, getDemographicsId } from "./DEMOGRAPHICS";
 export { BASC } from "./BASC";
 export { MASC } from "./MASC";
 export { CELF } from "./CELF";

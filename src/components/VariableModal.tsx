@@ -66,6 +66,7 @@ export const VariableModal: React.FC<SectionModalProps> = ({ bOpened, onClose, v
     const newVariable = mergeUndefined(variable, emptyVariable);
     if (!newVariable.idToken.variableId) newVariable.idToken.variableId = generateUUID();
     setSelectedVariable(newVariable);
+    console.log("newVariable: ", newVariable);
   }, [variable, mode]);
 
   const handleSelectedVariableUpdate = (id: string | number, path: PathsToFields<Variable>, value: any) => {
@@ -94,6 +95,7 @@ export const VariableModal: React.FC<SectionModalProps> = ({ bOpened, onClose, v
           logger.error("Variable is null. Cannot update variable.");
         }
       } else if (mode === 'create') {
+        selectedVariable.idToken.variableId = generateUUID();
         if (!selectedVariable.idToken.variableId || isEmptyValue(selectedVariable.idToken.variableId)) throw new Error("Variable ID is empty. Cannot create variable.");
         await createVariable(selectedVariable);
 

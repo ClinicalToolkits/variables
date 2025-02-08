@@ -1,11 +1,12 @@
 import React, { ReactNode, useMemo } from "react";
-import { UUID, DataType, Tag, InfoFieldConfig, ComboboxData, ObjectInfoConfig, Age, emptyTag, asUUID, ID_SEPERATOR, Visibility, convertEnumToComboboxDataArray, generateUUID } from "@clinicaltoolkits/type-definitions";
-import { DBVariableMetadata, VariableMetadata, emptyVariableMetadata } from "./VariableMetadata";
-import { IAffixParams, ITemplateBlock } from "@clinicaltoolkits/content-blocks";
-import { renderVariableTooltipContent } from "../contexts/variables/utility/child-variables/renderVariableTooltipContent";
 import { Editor } from "@tiptap/react";
 import { ExtendedHoverCardProps } from "@clinicaltoolkits/universal-react-components";
 import { RegexRuleArray } from "@clinicaltoolkits/utility-functions";
+import { UUID, DataType, Tag, InfoFieldConfig, ComboboxData, ObjectInfoConfig, Age, emptyTag, asUUID, ID_SEPERATOR, Visibility, convertEnumToComboboxDataArray, generateUUID } from "@clinicaltoolkits/type-definitions";
+import { IAffixParams, ITemplateBlock } from "@clinicaltoolkits/content-blocks";
+import { DBVariableMetadata, VariableMetadata, emptyVariableMetadata } from "./VariableMetadata";
+import { renderVariableTooltipContent } from "../contexts/variables/utility/child-variables/renderVariableTooltipContent";
+
 
 export class VariableIdToken {
   variableId: string;
@@ -58,6 +59,8 @@ export interface DBVariable {
   metadata?: DBVariableMetadata | null;
   tag_ids?: number[];
   associated_entity_abbreviated_name?: string;
+  entity_id?: string;
+  entity_version_id?: string;
 }
 
 /**
@@ -87,6 +90,8 @@ export interface Variable {
   content?: VariableContent | null;
   metadata?: VariableMetadata | null;
   associatedEntityAbbreviatedName?: string;
+  entityId?: string;
+  entityVersionId?: string;
 }
 export const getVariableFullName = (variable: Variable): string => variable.fullName;
 export const getVariableValue = (variable: Variable): VariableValue => variable.value;
@@ -104,6 +109,8 @@ export const emptyVariable: Variable = {
   orderWithinSet: 0,
   metadata: emptyVariableMetadata,
   associatedEntityAbbreviatedName: "",
+  entityId: "",
+  entityVersionId: "",
   content: {
     bCreateDescription: false,
     bCreateInterpretation: false,
@@ -164,6 +171,7 @@ export const getVariableObjectConfig = (
     { id: "23", propertyPath: "content.descriptionBlock.blocks", displayName: "Description", type: "richText", metadata: { editor: descriptionEditor, visibility: bInShowDescriptionBlock ? Visibility.VISIBLE : Visibility.HIDDEN } },
     { id: "24", propertyPath: "content.bCreateInterpretation", displayName: "Create Interpretation", type: "checkbox" },
     { id: "25", propertyPath: "content.interpretationBlock.blocks", displayName: "Interpretation", type: "richText", metadata: { editor: interpretationEditor, visibility: bInShowInterpretationBlock ? Visibility.VISIBLE : Visibility.HIDDEN } },
+    { id: "26", propertyPath: "entityId", displayName: "Entity ID", type: "select",  metadata: { options: entitiesComboboxData } },
   ]
 );
 

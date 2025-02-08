@@ -24,11 +24,11 @@ export interface VariableSetModalProps {
   actionComponent?: React.ReactNode;
 }
 
-export const getObjectIdPathTest = <Variable extends RecordType>(): PathsToFields<Variable> => {
+export const getVariableIdPathTest = <Variable extends RecordType>(): PathsToFields<Variable> => {
   return "idToken.id" as PathsToFields<Variable>;
 }
 
-export const getObjectLabelPathTest = <Variable extends RecordType>(): PathsToFields<Variable> => {
+export const getVariableILabelPathTest = <Variable extends RecordType>(): PathsToFields<Variable> => {
   return "abbreviatedName" as PathsToFields<Variable>;
 }
 
@@ -51,8 +51,8 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
   const interpretationEditor = useRichTextEditor(variableInterpretationEditorId, false);
 
   useEffect(() => {
-    updateGetObjectIdPathFunction(getObjectIdPathTest);
-    updateGetObjectLabelPathFunction(getObjectLabelPathTest);
+    updateGetObjectIdPathFunction(getVariableIdPathTest);
+    updateGetObjectLabelPathFunction(getVariableILabelPathTest);
   },[]);
 
   useEffect(() => {

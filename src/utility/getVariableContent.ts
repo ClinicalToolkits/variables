@@ -10,15 +10,15 @@ import {
   getTextFromContentBlock,
   isConditionalBlock,
   isTemplateBlock,
-  removePrefixesFromVariablesRule,
   ITemplateBlock,
-  upsertTemplateBlock
+  upsertTemplateBlock,
 } from "@clinicaltoolkits/content-blocks";
-import { Variable, VariableContent, VariableMap } from "../types";
 import { getSupabaseClient, logger, RegexRuleArray } from "@clinicaltoolkits/utility-functions";
-import { shouldDisplayVariable } from "../contexts";
 import { CURLY_BRACE_ENCLOSURE } from "@clinicaltoolkits/type-definitions";
+import { Variable, VariableContent, VariableMap } from "../types";
+import { shouldDisplayVariable } from "../contexts";
 import { Editor } from '@tiptap/react';
+import { removePrefixesFromVariablesRule } from "./variableIdFunctions";
 
 export const useUpsertVariableContent = () => {
   const upsertVariableContent = async (
@@ -101,10 +101,10 @@ export const fetchVariableContent = async (inDbVariableId: string, property?: st
   data?.forEach((row) => {
     templateBlockIds.push(row.id);
   });
+
   // Fetch `templateBlocks` and use them to populate the `variableContent` object, using the `property` column as the key
   const templateBlocks = await batchFetchTemplateBlock({ inIds: templateBlockIds, inAffixParams, inRegexRules });
   templateBlocks?.forEach((templateBlock) => {
-    console.log("templateBlock: ", templateBlock);
     if (templateBlock.property === "description") variableContent.descriptionBlock = templateBlock;
     if (templateBlock.property === "interpretation") variableContent.interpretationBlock = templateBlock;
     //if (templateBlock.blocks) variableContent[templateBlock.property] = templateBlock.blocks; // TODO: Double check if removing this line is safe
