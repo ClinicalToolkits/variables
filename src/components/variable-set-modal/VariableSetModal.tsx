@@ -115,6 +115,7 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
   return (
     <ActionCheckboxProvider>
       <InfoFieldModal
+        id="variable-set-modal"
         fullScreen
         opened={opened}
         onClose={onClose}

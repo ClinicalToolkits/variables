@@ -1,6 +1,6 @@
 {
   "name": "@clinicaltoolkits/variables",
-  "version": "1.0.315",
+  "version": "1.0.322",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -48,12 +48,12 @@
   },
   "dependencies": {
     "@clinicaltoolkits/type-definitions": "^1.0.378",
-    "@clinicaltoolkits/universal-react-components": "^1.0.1027",
+    "@clinicaltoolkits/universal-react-components": "^1.0.1086",
     "@clinicaltoolkits/utility-functions": "^1.0.102",
     "@mantine/core": "^7.15.2",
     "@mantine/hooks": "^7.15.2"
   },
   "peerDependencies": {
-    "@clinicaltoolkits/content-blocks": "^1.0.411"
+    "@clinicaltoolkits/content-blocks": "^1.0.416"
   }
 }
