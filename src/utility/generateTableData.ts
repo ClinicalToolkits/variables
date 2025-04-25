@@ -21,6 +21,7 @@ const getRowFormatting = (headerColour?: string): Record<string, RowFormatting> 
   subheader: {
     rowType: RowType.SUBHEADER,
     bold: true,
+    horizontalAlignment: HorizontalAlignment.Centered,
   },
 });
 

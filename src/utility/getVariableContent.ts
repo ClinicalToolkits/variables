@@ -20,57 +20,75 @@ import { shouldDisplayVariable } from "../contexts";
 import { Editor } from '@tiptap/react';
 import { removePrefixesFromVariablesRule } from "./variableIdFunctions";
 
-export const useUpsertVariableContent = () => {
-  const upsertVariableContent = async (
-    inVariable: Variable, 
-    propertyKey: 'descriptionBlock' | 'interpretationBlock', 
-    editor: Editor | null,
-    mode?: 'create' | 'update'
-  ) => {
-    if (!editor) {
-      logger.error("Editor is null or undefined");
-      return;
-    }
-    console.log("inVariable: ", inVariable);
-    let templateBlock: ITemplateBlock;
+export const convertVariableContentToBlock = (inVariable: Variable, inEditor: Editor | null, inPropertyKey: 'description' | 'interpretation'): ITemplateBlock => {
+  if (!inEditor) throw new Error("Editor is null or undefined");
+  let templateBlock: ITemplateBlock;
 
-    // Convert info field nodes to placeholders in the specified editor
-    convertInfoFieldNodesToPlaceholders(editor);
-    const updatedBlocks = convertTipTapJSONToBlocks(editor?.getJSON());
+  // Convert info field nodes to placeholders in the specified editor
+  convertInfoFieldNodesToPlaceholders(inEditor);
+  const updatedBlocks = convertTipTapJSONToBlocks(inEditor.getJSON());
 
-    // Set up regex rules and parameters
-    const affixParams: IAffixParams = {
-      inEnclosure: CURLY_BRACE_ENCLOSURE,
-      inPrefixToRemove: inVariable.idToken.prefix,
-    };
-    const regexRules: RegexRuleArray = [removePrefixesFromVariablesRule(affixParams)];
-
-    // Update the specified property using the propertyKey
-    if (inVariable.content) {
-      if (!inVariable.content[propertyKey]) {
-        templateBlock = createTemplateBlock({
-          property: propertyKey === 'descriptionBlock' ? 'description' : 'interpretation',
-          blocks: updatedBlocks,
-          entityId: inVariable.idToken.entityId,
-          entityVersionId: inVariable.idToken.entityVersionId,
-          variableId: inVariable.idToken.variableId,
-        });
-        inVariable.content[propertyKey] = templateBlock;
-      } else {
-        templateBlock = { ...inVariable.content[propertyKey] };
-        templateBlock.blocks = updatedBlocks;
-      }
-
-      if (!isTemplateBlock(templateBlock)) throw Error("upsertVariableContent() - The updated template block is not a valid template block.");
-      await upsertTemplateBlock({ inTemplateBlock: templateBlock, inAffixParams: affixParams, inRegexRules: regexRules });
+  // Update the specified property using the propertyKey
+  if (inVariable.content) {
+    if (!inVariable.content[inPropertyKey]) {
+      templateBlock = createTemplateBlock({
+        property: inPropertyKey === 'description' ? 'description' : 'interpretation',
+        blocks: updatedBlocks,
+        entityId: inVariable.idToken.entityId,
+        entityVersionId: inVariable.idToken.entityVersionId,
+        variableId: inVariable.idToken.variableId,
+      });
+      inVariable.content[inPropertyKey] = templateBlock;
     } else {
-      throw Error(`upsertVariableContent() - Can't update content blocks, variable does not have a defined content property.`);
+      templateBlock = { ...inVariable.content[inPropertyKey] };
+      templateBlock.blocks = updatedBlocks;
     }
-  };
+  } else {
+    throw new Error(`upsertVariableContent() - Can't update content blocks, variable does not have a defined content property.`);
+  }
 
-  return { upsertVariableContent };
+  return templateBlock;
 };
 
+export interface IUpsertVariableContentParams {
+  inVariable: Variable;
+}
+
+export const upsertVariableContent = async ({ inVariable }: IUpsertVariableContentParams) => {
+  // Set up regex rules and parameters
+  const affixParams: IAffixParams = {
+    inEnclosure: CURLY_BRACE_ENCLOSURE,
+    inPrefixToRemove: inVariable.idToken.prefix,
+  };
+  const regexRules: RegexRuleArray = [removePrefixesFromVariablesRule(affixParams)];
+
+  try {
+    const contentUpserts: Promise<unknown>[] = [];
+    if (inVariable.content?.bCreateDescription && inVariable.content.description) {
+      contentUpserts.push(
+        upsertTemplateBlock({
+          inTemplateBlock: inVariable.content.description,
+          inAffixParams: affixParams,
+          inRegexRules: regexRules,
+        })
+      );
+    }
+    if (inVariable.content?.bCreateInterpretation && inVariable.content.interpretation) {
+      contentUpserts.push(
+        upsertTemplateBlock({
+          inTemplateBlock: inVariable.content.interpretation,
+          inAffixParams: affixParams,
+          inRegexRules: regexRules,
+        })
+      );
+    }
+
+    // Wait for all operations to complete
+    await Promise.all(contentUpserts);
+  } catch (error) {
+    logger.error("upsertVariableContent - Error upserting template block: ", error);
+  }
+};
 
 export const fetchVariableContent = async (inDbVariableId: string, property?: string, inAffixParams?: IAffixParams, inRegexRules?: RegexRuleArray, inEntityId?: string, inEntityVersionId?: string): Promise<VariableContent | undefined> => {
   const variableContent: VariableContent = {};
@@ -105,8 +123,8 @@ export const fetchVariableContent = async (inDbVariableId: string, property?: st
   // Fetch `templateBlocks` and use them to populate the `variableContent` object, using the `property` column as the key
   const templateBlocks = await batchFetchTemplateBlock({ inIds: templateBlockIds, inAffixParams, inRegexRules });
   templateBlocks?.forEach((templateBlock) => {
-    if (templateBlock.property === "description") variableContent.descriptionBlock = templateBlock;
-    if (templateBlock.property === "interpretation") variableContent.interpretationBlock = templateBlock;
+    if (templateBlock.property === "description") variableContent.description = templateBlock;
+    if (templateBlock.property === "interpretation") variableContent.interpretation = templateBlock;
     //if (templateBlock.blocks) variableContent[templateBlock.property] = templateBlock.blocks; // TODO: Double check if removing this line is safe
   });
 
@@ -121,7 +139,7 @@ export const fetchVariableContent = async (inDbVariableId: string, property?: st
 
 export const fetchVariableDescription = async (inDbVariableId: string): Promise<ITemplateBlock | undefined> => {
   const variableContent = await fetchVariableContent(inDbVariableId, "description");
-  return variableContent?.descriptionBlock;
+  return variableContent?.description;
 };
 
 export const getVariableContent = (inVariable: Variable): VariableContent | undefined => {
@@ -129,12 +147,12 @@ export const getVariableContent = (inVariable: Variable): VariableContent | unde
 };
 export const setVariableContent = (inVariable: Variable, inContent: VariableContent | undefined) => {
   inVariable.content = inContent;
-  if (inVariable.content?.descriptionBlock) inVariable.content.bCreateDescription = true;
-  if (inVariable.content?.interpretationBlock) inVariable.content.bCreateInterpretation = true;
+  if (inVariable.content?.description) inVariable.content.bCreateDescription = true;
+  if (inVariable.content?.interpretation) inVariable.content.bCreateInterpretation = true;
 };
 
 export const getContentBlocksFromVariableDescription = (inVariable: Variable): ContentBlock[] | undefined => {
-  const descriptionBlock = getVariableContent(inVariable)?.descriptionBlock;
+  const descriptionBlock = getVariableContent(inVariable)?.description;
   if (!descriptionBlock) return undefined;
   return getContentBlocksFromTemplateBlock(descriptionBlock);
 };
@@ -152,14 +170,14 @@ export const setVariableDescriptionContentBlocks = (inVariable: Variable, inCont
   const updatedVariable = { ...inVariable };
 
   updatedVariable.content = updatedVariable.content || {};
-  if (!updatedVariable.content.descriptionBlock) throw Error("setVariableDescriptionContentBlocks() - Can't set content blocks, variable does not have a parent description block.");
-  updatedVariable.content.descriptionBlock.blocks = inContentBlocks;
+  if (!updatedVariable.content.description) throw Error("setVariableDescriptionContentBlocks() - Can't set content blocks, variable does not have a parent description block.");
+  updatedVariable.content.description.blocks = inContentBlocks;
   return updatedVariable;
 };
 
 export const getContentBlocksFromVariableInterpretation = (inVariable: Variable, variableMap: VariableMap, bRemoveUnusedContentControls: boolean): ContentBlock[] | undefined => {
   //const variableId = inVariable.idToken.databaseId as string;
-  let interpretationBlocks: ContentBlock[] | undefined = getVariableContent(inVariable)?.interpretationBlock?.blocks;
+  let interpretationBlocks: ContentBlock[] | undefined = getVariableContent(inVariable)?.interpretation?.blocks;
   if (!interpretationBlocks) return undefined;
 
   const conditionalBlock = interpretationBlocks[0];
@@ -173,7 +191,7 @@ export const setVariableInterpretationContentBlocks = (inVariable: Variable, inC
   const updatedVariable = { ...inVariable };
 
   updatedVariable.content = updatedVariable.content || {};
-  if (!updatedVariable.content.interpretationBlock) throw Error("setVariableInterpretationContentBlocks() - Can't set content blocks, variable does not have a parent interpretation block.");
-  updatedVariable.content.interpretationBlock.blocks = inContentBlocks;
+  if (!updatedVariable.content.interpretation) throw Error("setVariableInterpretationContentBlocks() - Can't set content blocks, variable does not have a parent interpretation block.");
+  updatedVariable.content.interpretation.blocks = inContentBlocks;
   return updatedVariable;
 };

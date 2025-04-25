@@ -176,7 +176,7 @@ export function convertVariablePropertiesToDB(variable: Partial<Variable>): Part
   if (variable.metadata !== undefined) dbVariable.metadata = getDBVariableMetadataProperties(variable.metadata);
   if (variable.associatedEntityAbbreviatedName !== undefined) dbVariable.associated_entity_abbreviated_name = variable.associatedEntityAbbreviatedName;
   if (variable.entityId !== undefined) dbVariable.entity_id = variable.entityId;
-  //if (variable.entityVersionId !== undefined) dbVariable.entity_version_id = variable.entityVersionId;
+  if (variable.entityVersionId !== undefined) dbVariable.entity_version_id = variable.entityVersionId;
 
   // Ensure all conversions are applied
   // Note: This function assumes that each field of `Variable` has a direct or computed mapping to `DBVariable`

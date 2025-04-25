@@ -1,8 +1,9 @@
+/*
 import { hasProperty } from "@clinicaltoolkits/type-definitions";
-import { Variable, VariableMap, /*AssociatedSubvariableProperties*/ } from "../../../types";
+import { Variable, VariableMap } from "../../../types";
 import { shouldDisplayVariable } from "../utility";
 
-/*export function getVariableProperty(key: string, propertyPath: keyof Variable, variableMap: VariableMap): string {
+export function getVariableProperty(key: string, propertyPath: keyof Variable, variableMap: VariableMap): string {
   const item = variableMap.get(key);
   if (item && hasProperty(item, propertyPath)) {
     return item[propertyPath] as string; // Cast to string if you're sure it's always a string.

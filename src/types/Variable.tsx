@@ -138,6 +138,7 @@ export const getVariableInputConfig = (size?: string, mapTest?: Map<string, Vari
 export const getVariableObjectConfig = (
   tagsComboboxData: ComboboxData[],
   entitiesComboboxData: ComboboxData[],
+  entityVersionsComboboxData: ComboboxData[],
   descriptiveRatingSetComboxData: ComboboxData[],
   variablesComboboxData: ComboboxData[],
   descriptionEditor?: Editor | null,
@@ -168,10 +169,11 @@ export const getVariableObjectConfig = (
     { id: "20", propertyPath: "metadata.descriptiveRatingVisibility", displayName: "Descriptive Rating Visibility", type: "select", metadata: { options: convertEnumToComboboxDataArray(Visibility) } },
     { id: "21", propertyPath: "metadata.bIncludeInDynamicTable", displayName: "Include In Dynamic Table", type: "checkbox" },
     { id: "22", propertyPath: "content.bCreateDescription", displayName: "Create Description", type: "checkbox" },
-    { id: "23", propertyPath: "content.descriptionBlock.blocks", displayName: "Description", type: "richText", metadata: { editor: descriptionEditor, visibility: bInShowDescriptionBlock ? Visibility.VISIBLE : Visibility.HIDDEN } },
+    { id: "23", propertyPath: "content.description.blocks", displayName: "Description", type: "richText", metadata: { editor: descriptionEditor, visibility: bInShowDescriptionBlock ? Visibility.VISIBLE : Visibility.HIDDEN } },
     { id: "24", propertyPath: "content.bCreateInterpretation", displayName: "Create Interpretation", type: "checkbox" },
-    { id: "25", propertyPath: "content.interpretationBlock.blocks", displayName: "Interpretation", type: "richText", metadata: { editor: interpretationEditor, visibility: bInShowInterpretationBlock ? Visibility.VISIBLE : Visibility.HIDDEN } },
+    { id: "25", propertyPath: "content.interpretation.blocks", displayName: "Interpretation", type: "richText", metadata: { editor: interpretationEditor, visibility: bInShowInterpretationBlock ? Visibility.VISIBLE : Visibility.HIDDEN } },
     { id: "26", propertyPath: "entityId", displayName: "Entity ID", type: "select",  metadata: { options: entitiesComboboxData } },
+    { id: "27", propertyPath: "entityVersionId", displayName: "Entity Version ID", type: "select",  metadata: { options: entityVersionsComboboxData } },
   ]
 );
 
@@ -197,8 +199,8 @@ export function convertVariablesToComboboxData(variables: Variable[]): ComboboxD
 export interface VariableContent {
   bCreateDescription?: boolean;
   bCreateInterpretation?: boolean;
-  descriptionBlock?: ITemplateBlock;
-  interpretationBlock?: ITemplateBlock;
+  description?: ITemplateBlock;
+  interpretation?: ITemplateBlock;
   affixParams?: IAffixParams;
   regexRules?: RegexRuleArray;
   //[key: string]: ContentBlock[] | undefined; // TODO: Check if removing this line is safe, removal was required to allow PathsToFields to not throw an error
