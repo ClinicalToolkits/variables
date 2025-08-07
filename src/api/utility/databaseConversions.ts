@@ -77,14 +77,6 @@ export async function convertDBVariableToVariable({
   const variableContent = preFetchedContent || await fetchVariableContent(
     id,
     undefined,
-    {
-      inPrefixToApply: (entityId && entityVersionId) ? `${entityId}:${entityVersionId}` : undefined,
-      inEnclosure: CURLY_BRACE_ENCLOSURE,
-    },
-    getVariableAffixRules({
-      inPrefixToApply: (entityId && entityVersionId) ? `${entityId}:${entityVersionId}` : undefined,
-      inEnclosure: CURLY_BRACE_ENCLOSURE,
-    }),
     entityId,
     entityVersionId
   );

@@ -1,5 +1,5 @@
-import { DataType, convertMonthsToAge } from "@clinicaltoolkits/type-definitions";
-import { isEmptyValue } from "@clinicaltoolkits/utility-functions";
+import { DataType, convertMonthsToAge, formatAgeToNaturalLagnuage } from "@clinicaltoolkits/type-definitions";
+import { isEmptyValue, logger } from "@clinicaltoolkits/utility-functions";
 
 export function getVariableValueAsString(value: any, dataType: DataType): string {
   let formattedValue = "-";
@@ -8,7 +8,7 @@ export function getVariableValueAsString(value: any, dataType: DataType): string
   switch (dataType) {
     case DataType.AGE: {
       const clientAge = convertMonthsToAge(value);
-      formattedValue = `${clientAge.years} Years, ${clientAge.months} Months`;
+      formattedValue = formatAgeToNaturalLagnuage(clientAge);
       break;
     }
     case DataType.PERCENTILE_RANGE: {
@@ -26,6 +26,6 @@ export function getVariableValueAsString(value: any, dataType: DataType): string
     }
   }
 
-  console.log(`Value ${value} formatted as ${formattedValue}`);
+  logger.debug(`getVariableValueAsString - Value ${value} formatted as ${formattedValue}`);
   return formattedValue;
 }

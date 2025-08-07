@@ -4,7 +4,7 @@ import { InputFieldRegistryProvider, ThemeKeys, TooltipProvider, containerStyles
 import { createCTSupabaseClient, getSupabaseClient, logger, setSupabaseClient } from '@clinicaltoolkits/utility-functions';
 import { DescriptiveRatingTable, VariableProvider, VariableSetSelector, VariableTable, fetchVariableSets, useVariableContext, variableComponentRegistry, variableTypesWithTwoFields } from '../src/index';
 import { useEditor } from "@tiptap/react";
-import { contentBlockComponentRegistry, ContentBlockWrapperOptionsProvider, defaultExtensions, InfoFieldNodeProvider } from '@clinicaltoolkits/content-blocks';
+import { contentBlockComponentRegistry, ContentBlockWrapperOptionsProvider, defaultExtensions } from '@clinicaltoolkits/content-blocks';
 import { RichTextEditor as MantineRichTextEditor } from '@mantine/tiptap';
 
 const componentRegistry = {
@@ -98,7 +98,7 @@ const Test: React.FC = () => {
 
   const handleInitializeVariables = async () => {
     if (bInitializeVariables) {
-      const variableSets = await fetchVariableSets(["7c7576d4-704f-4a8a-aff3-793aea573e07", "5ac2937c-39a5-4638-b510-f58a023e9d96"]);
+      const variableSets = await fetchVariableSets(["fa8ef6d9-a6ce-4993-b499-c12d1ae7097e", "5ac2937c-39a5-4638-b510-f58a023e9d96"]);
       variableSets.forEach((variableSet) => {
         addVariableSet(variableSet);
       });

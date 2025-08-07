@@ -84,19 +84,11 @@ export const fetchVariables = async ({
         variableSetDescriptiveRatings = await fetchDescriptiveRatingsArray(descriptiveRatingId);
       }
 
-      const variableContentAffixParams: IAffixParams = {
-        inPrefixToApply: (entityId && entityVersionId) ? `${entityId}:${entityVersionId}` : undefined,
-        inEnclosure: contentBlockStore.enclosure,
-      };
-      const variableRegexRules = getVariableAffixRules(variableContentAffixParams);
-
       // Batch fetch variable contents
       const variableContentPromises = data.map(dbVariable =>
         fetchVariableContent(
           dbVariable.id,
           undefined,
-          variableContentAffixParams,
-          variableRegexRules,
           entityId,
           entityVersionId
         )

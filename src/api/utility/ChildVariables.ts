@@ -18,6 +18,7 @@ export function initializeVariableMetadata(variable: Variable) {
 function createBaseVariableTemplate(variable: Variable): Variable {
   return {
     ...variable,
+    content: undefined,
     metadata: { label: variable.metadata?.label },
   };
 }

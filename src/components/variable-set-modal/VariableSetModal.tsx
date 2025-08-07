@@ -6,7 +6,7 @@ import { getOptionalVariableSubgroups, handleAutoVariableUpdates, useSortAndGrou
 import { SetVariableFunction, Variable, VariableSet, getVariableInputConfig } from "../../types";
 import { VariableCheckboxGroup } from "./VariableCheckboxGroup";
 import { ActionCheckboxProvider, ActionCheckboxes } from "./ActionCheckbox";
-import { useContentBlockWrapperOptions, useInfoFieldOptions, useRichTextEditor } from "@clinicaltoolkits/content-blocks";
+import { objectMapStore, /*useContentBlockWrapperOptions, useInfoFieldOptions,*/ useRichTextEditor } from "@clinicaltoolkits/content-blocks";
 import { logger } from "@clinicaltoolkits/utility-functions";
 import styles from "./styles.module.css";
 
@@ -19,6 +19,11 @@ export interface VariableSetModalProps {
   inputSize?: MantineSize;
   classNames?: {
     infoField?: InfoFieldClassNames;
+    modal?: {
+      root?: string;
+      body?: string;
+      content?: string;
+    }
   };
   onVariableValueUpdated: SetVariableFunction;
   actionComponent?: React.ReactNode;
@@ -42,8 +47,8 @@ export const variableInterpretationEditorId = "variableInterpretationEditor";
  * @param titleChildren - Array of React nodes to display in the title section of the modal.
  */
 export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet, headingChildren = [], opened, onClose, headingProps, inputSize = "sm", classNames, onVariableValueUpdated, actionComponent }) => {
-  const { updateGetObjectFunction, updateGetObjectDisplayNameFunction } = useInfoFieldOptions(); // TODO: Variables module should be self-contained, that means that the InfoFieldOptionsProvider needs to be placed inside the VariablesProvider (or we need to allow the user to optionally pass in the InfoFieldProvider to the VariablesProvider, in order to allow them more control over Provider placement and nesting)
-  const { updateGetObjectMapFunction, updateGetObjectIdPathFunction, updateGetObjectLabelPathFunction } = useContentBlockWrapperOptions(); // TODO: Ditto
+  //const { updateGetObjectFunction, updateGetObjectDisplayNameFunction } = useInfoFieldOptions(); // TODO: Variables module should be self-contained, that means that the InfoFieldOptionsProvider needs to be placed inside the VariablesProvider (or we need to allow the user to optionally pass in the InfoFieldProvider to the VariablesProvider, in order to allow them more control over Provider placement and nesting)
+  //const { updateGetObjectMapFunction, updateGetObjectIdPathFunction, updateGetObjectLabelPathFunction } = useContentBlockWrapperOptions(); // TODO: Ditto
   const bVerticalTooltipContent = useIsSmallScreen();
 
   const { variableMap } = useVariableContext();
@@ -51,12 +56,14 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
   const interpretationEditor = useRichTextEditor(variableInterpretationEditorId, false);
 
   useEffect(() => {
-    updateGetObjectIdPathFunction(getVariableIdPathTest);
-    updateGetObjectLabelPathFunction(getVariableILabelPathTest);
+    objectMapStore.setIdPath(getVariableIdPathTest());
+    objectMapStore.setLabelPath(getVariableILabelPathTest());
+    //updateGetObjectIdPathFunction(getVariableIdPathTest);
+    //updateGetObjectLabelPathFunction(getVariableILabelPathTest);
   },[]);
 
   useEffect(() => {
-    const getObject = (id: string): RecordType | undefined => {
+    /*const getObject = (id: string): RecordType | undefined => {
       const object = variableMap.get(id);
       return object;
     };
@@ -69,7 +76,10 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
 
     updateGetObjectFunction(getObject);
     updateGetObjectDisplayNameFunction(getObjectDisplayName);
-    updateGetObjectMapFunction(() => variableMap);
+    updateGetObjectMapFunction(() => variableMap);*/
+    objectMapStore.replace(variableMap);
+    objectMapStore.setLabelPath(getVariableILabelPathTest());
+    objectMapStore.setIdPath(getVariableIdPathTest());
   }, [variableMap]);
 
   const { variableGroups } = useSortAndGroupVariables(variableSet);
@@ -125,7 +135,7 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
         infoFieldConfig={getVariableInputConfig(inputSize, variableMap, descriptionEditor, interpretationEditor, hoverCardProps, bVerticalTooltipContent)}
         onUpdate={handleVariableUpdate}
         gap={0}
-        classNames={infoFieldClassNames}
+        classNames={{ infoField: infoFieldClassNames, modal: classNames?.modal }}
         actionComponent={actionComponent}
       />
     </ActionCheckboxProvider>

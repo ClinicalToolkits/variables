@@ -3,7 +3,7 @@ import { Editor } from "@tiptap/react";
 import { ExtendedHoverCardProps } from "@clinicaltoolkits/universal-react-components";
 import { RegexRuleArray } from "@clinicaltoolkits/utility-functions";
 import { UUID, DataType, Tag, InfoFieldConfig, ComboboxData, ObjectInfoConfig, Age, emptyTag, asUUID, ID_SEPERATOR, Visibility, convertEnumToComboboxDataArray, generateUUID } from "@clinicaltoolkits/type-definitions";
-import { IAffixParams, ITemplateBlock } from "@clinicaltoolkits/content-blocks";
+import { ContentBlock, IAffixParams, ITemplateBlock } from "@clinicaltoolkits/content-blocks";
 import { DBVariableMetadata, VariableMetadata, emptyVariableMetadata } from "./VariableMetadata";
 import { renderVariableTooltipContent } from "../contexts/variables/utility/child-variables/renderVariableTooltipContent";
 
@@ -199,6 +199,7 @@ export function convertVariablesToComboboxData(variables: Variable[]): ComboboxD
 export interface VariableContent {
   bCreateDescription?: boolean;
   bCreateInterpretation?: boolean;
+  result?: ITemplateBlock;
   description?: ITemplateBlock;
   interpretation?: ITemplateBlock;
   affixParams?: IAffixParams;

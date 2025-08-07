@@ -143,7 +143,7 @@ export const getVariableAffixRules = ({ inPrefixToApply, inPrefixToRemove, inSuf
   return rules;
 };
 
-const replaceUUIDEnclosureFunction = (currentEnclosure: [string, string], replacementEnclosure: [string, string]) => createReplacementFunction({
+/*const replaceUUIDEnclosureFunction = (currentEnclosure: [string, string], replacementEnclosure: [string, string]) => createReplacementFunction({
   processData: (matches) => {
     return replacementEnclosure[0] + matches.basePattern + matches.everythingAfterBasePattern + replacementEnclosure[1];
   },
@@ -163,7 +163,7 @@ const removeUUIDEnclosureFunction = (enclosure: [string, string]) => createRepla
 export const removeUUIDEnclosureRule = (enclosure: [string, string]): RegexRule => ({
   pattern: REPEATING_UUID_REGEX_PATTERN(enclosure),
   replacement: removeUUIDEnclosureFunction(enclosure),
-});
+});*/
 
 const replaceUUIDPatternFunction = (
   variableMap: VariableMap,

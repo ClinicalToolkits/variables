@@ -8,8 +8,8 @@ export const fetchVariablesComboboxData = async (variableIds?: string[]): Promis
   const supabaseClient = getSupabaseClient();
   let variableComboboxData: ComboboxData[] = [];
   let query = supabaseClient
-  .from("variables")
-  .select(`id, label`)
+    .from("variables")
+    .select(`id, label`)
 
   if (variableIds) {
     query = query.in("id", variableIds);

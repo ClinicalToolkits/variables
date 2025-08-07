@@ -12,13 +12,14 @@ import {
   isTemplateBlock,
   ITemplateBlock,
   upsertTemplateBlock,
+  contentBlockStore,
 } from "@clinicaltoolkits/content-blocks";
 import { getSupabaseClient, logger, RegexRuleArray } from "@clinicaltoolkits/utility-functions";
 import { CURLY_BRACE_ENCLOSURE } from "@clinicaltoolkits/type-definitions";
 import { Variable, VariableContent, VariableMap } from "../types";
 import { shouldDisplayVariable } from "../contexts";
 import { Editor } from '@tiptap/react';
-import { removePrefixesFromVariablesRule } from "./variableIdFunctions";
+import { getVariableAffixRules, removePrefixesFromVariablesRule } from "./variableIdFunctions";
 
 export const convertVariableContentToBlock = (inVariable: Variable, inEditor: Editor | null, inPropertyKey: 'description' | 'interpretation'): ITemplateBlock => {
   if (!inEditor) throw new Error("Editor is null or undefined");
@@ -90,7 +91,7 @@ export const upsertVariableContent = async ({ inVariable }: IUpsertVariableConte
   }
 };
 
-export const fetchVariableContent = async (inDbVariableId: string, property?: string, inAffixParams?: IAffixParams, inRegexRules?: RegexRuleArray, inEntityId?: string, inEntityVersionId?: string): Promise<VariableContent | undefined> => {
+export const fetchVariableContent = async (inDbVariableId: string, property?: string, inEntityId?: string, inEntityVersionId?: string): Promise<VariableContent | undefined> => {
   const variableContent: VariableContent = {};
   const templateBlockIds: string[] = [];
   let query = getSupabaseClient()
@@ -120,18 +121,26 @@ export const fetchVariableContent = async (inDbVariableId: string, property?: st
     templateBlockIds.push(row.id);
   });
 
+  const affixParams: IAffixParams = {
+    inPrefixToApply: (inEntityId && inEntityVersionId) ? `${inEntityId}:${inEntityVersionId}` : undefined,
+    inEnclosure: contentBlockStore.enclosure,
+  };
+  const regexRules: RegexRuleArray = getVariableAffixRules(affixParams);
+  console.log("fetchVariableContent - affixParams: ", affixParams);
   // Fetch `templateBlocks` and use them to populate the `variableContent` object, using the `property` column as the key
-  const templateBlocks = await batchFetchTemplateBlock({ inIds: templateBlockIds, inAffixParams, inRegexRules });
+  const templateBlocks = await batchFetchTemplateBlock({ inIds: templateBlockIds, inAffixParams: affixParams, inRegexRules: regexRules });
   templateBlocks?.forEach((templateBlock) => {
     if (templateBlock.property === "description") variableContent.description = templateBlock;
     if (templateBlock.property === "interpretation") variableContent.interpretation = templateBlock;
+    if (templateBlock.property === "result") variableContent.result = templateBlock;
     //if (templateBlock.blocks) variableContent[templateBlock.property] = templateBlock.blocks; // TODO: Double check if removing this line is safe
   });
+  console.log("fetchVariableContent - templateBlocks: ", templateBlocks);
 
   const bEmptyObject = Object.keys(variableContent).length === 0;
   if (!bEmptyObject) {
-    variableContent.affixParams = inAffixParams;
-    variableContent.regexRules = inRegexRules;
+    variableContent.affixParams = affixParams;
+    variableContent.regexRules = regexRules;
   }
 
   return bEmptyObject ? undefined : variableContent;
