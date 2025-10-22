@@ -1,4 +1,5 @@
-import { getSupabaseClient } from "@clinicaltoolkits/utility-functions";
+/*
+import { getSupabaseClient } from "@clinicaltoolkits/ct-supabase";
 import { convertDBVariableSetArrayToVariableSetArray } from "./convertVariableSetDBToVariableSet";
 import { VariableSet } from "../../types";
 
@@ -25,3 +26,4 @@ export async function getVariableSubsetArrayFromDatabase(
     throw error;
   }
 }
+  */

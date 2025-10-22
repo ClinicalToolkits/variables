@@ -1,6 +1,7 @@
-import { getSupabaseClient, logger } from "@clinicaltoolkits/utility-functions";
+import { logger } from "@clinicaltoolkits/utility-functions";
 import { convertVariablePropertiesToDB } from "./utility";
 import { Variable } from "../types";
+import { getSupabaseClient } from "@clinicaltoolkits/ct-supabase";
 
 export async function updateVariable(databaseId: string, variableProperties: Partial<Variable>) {
 
@@ -13,7 +14,7 @@ export async function updateVariable(databaseId: string, variableProperties: Par
 
     const { data, error } = await supabaseClient
       .from('variables')
-      .update(updatedProperties)
+      .update(updatedProperties as any) // TODO: Fix type issue - should not need 'as any'
       .eq("id", databaseId);
   
     if (error) {

@@ -39,7 +39,7 @@ export const getVariableSubgroupsToDisplay = (variableSet: VariableSet, variable
   // Determine sort order using required variables
   const subgroupOrder = Object.entries(requiredVariableSubgroups).map(([subgroup, vars]) => ({
     subgroup,
-    minOrder: Math.min(...vars.map(varKey => variableMap.get(varKey)?.orderWithinSet ?? Infinity))
+    minOrder: Math.min(...vars.map(varKey => variableMap.get(varKey)?.getOrderWithinSet() ?? Infinity))
   }))
   .sort((a, b) => a.minOrder - b.minOrder)
   .map(entry => entry.subgroup);
@@ -69,19 +69,21 @@ export const getVariableSubgroupsToDisplay = (variableSet: VariableSet, variable
 };
 
 export function getSubgroupNameForVariable(variable: Variable): string {
-  const bOptionalVariable = variable.metadata?.bOptional;
+  const bOptionalVariable = variable.getMetadata()?.bOptional;
   // Default to "Optional Items" or "Required Items" if the variable does not have a subgroup tag
   let pluralizedName = bOptionalVariable ? "Optional Items" : "Required Items";
-  if (variable.subgroupTag) {
-    if (variable.subgroupTag?.metadata?.pluralName) {
+  const subgroupTag = variable.getSubgroupTag();
+  if (subgroupTag) {
+    const pluralName = subgroupTag.metadata?.pluralName;
+    if (pluralName) {
       // If the subgroup tag has a plural name, use that as the name of the subgroup
-      pluralizedName = addSpaces({ text: variable.subgroupTag?.metadata?.pluralName, bTitleCase: true });
+      pluralizedName = addSpaces({ text: pluralName, bTitleCase: true });
       if (bOptionalVariable) {
         pluralizedName = `Optional ${pluralizedName}`;
       }
     } else {
       // If the subgroup tag does not have a plural name, use the name of the subgroup tag and pluralize it by adding an 's'
-      pluralizedName = `${addSpaces({ text: variable.subgroupTag.name, bTitleCase: true })}s`;
+      pluralizedName = `${addSpaces({ text: subgroupTag.name, bTitleCase: true })}s`;
       if (bOptionalVariable) {
         pluralizedName = `Optional ${pluralizedName}`;
       }

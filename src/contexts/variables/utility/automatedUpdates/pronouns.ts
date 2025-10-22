@@ -11,9 +11,9 @@ export const handleAutoPronounUpdates = (
   pronounIds?.forEach((pronounId: string) => {
     const pronounVariable = variableMap.get(pronounId);
     if (pronounVariable) {
-      const pronounValue = getPronounValue(pronounVariable.abbreviatedName, genderValue);
+      const pronounValue = getPronounValue(pronounVariable.getAbbreviatedName(), genderValue);
       if (pronounValue) { 
-        setVariable(pronounVariable.idToken.id, pronounValue ?? "");
+        setVariable(pronounVariable.getId(), pronounValue ?? "");
         updatedPronounValues[pronounId] = pronounValue;
       }
     } else {

@@ -1,5 +1,5 @@
-import { getSupabaseClient } from "@clinicaltoolkits/utility-functions";
-import { toCamelCaseKeys } from "@clinicaltoolkits/utility-functions";
+import { getSupabaseClient } from "@clinicaltoolkits/ct-supabase";
+import { TextOps } from "@clinicaltoolkits/utility-functions";
 import { DescriptiveRatingSet } from "../types";
 
 type DescriptiveRatingSetProperties = Partial<DescriptiveRatingSet>;
@@ -10,14 +10,14 @@ export const updateDescriptiveRatingSet = async (id: string, descriptiveRatingSe
     .from("descriptive_rating_sets")
     .update({
       full_name: descriptiveRatingSetProperties.fullName,
-      ratings: descriptiveRatingSetProperties.ratings,
+      ratings: descriptiveRatingSetProperties.ratings as any // TODO: fix types - should not need 'as any'
     })
-    .eq("id", id)
+    .eq("id", id as any) // TODO: fix types - should not need 'as any'
     .select();
 
   if (error) {
     throw new Error(`Supabase error: ${error.message}`);
   }
 
-  return data ? toCamelCaseKeys(data)[0] : undefined;
+  return TextOps.toCamelKeys(data)[0] as any; // TODO: fix types - should not need 'as any'
 };

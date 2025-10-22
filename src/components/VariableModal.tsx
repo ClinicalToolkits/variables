@@ -2,12 +2,13 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import { InfoFieldObjectProperties, SingleSelectDropdown } from '@clinicaltoolkits/universal-react-components';
 import { Button, Modal, Stack } from '@mantine/core';
 import { ComboboxData, convertObjectArrayToComboboxDataArray, entityRecords, generateUUID, ObjectInfoConfig, PathsToFields, setValueByPath, tags } from '@clinicaltoolkits/type-definitions';
-import { mergeUndefined, logger, capitalizeFirstLetter, isEmptyValue, getSupabaseClient } from '@clinicaltoolkits/utility-functions';
-import { updateVariable, createVariable, fetchVariablesComboboxData, fetchVariable, upsertVariable } from '../api';
-import { Variable, emptyVariable, getVariableObjectConfig } from '../types';
+import { mergeUndefined, logger } from '@clinicaltoolkits/utility-functions';
+import { updateVariable, fetchVariablesComboboxData, fetchVariable, upsertVariable } from '../api';
+import { Variable, VariableData, createEmptyVariable, getVariableObjectConfig, isVariable, wrapVariables } from '../types';
 import { convertVariableContentToBlock, upsertVariableContent } from '../utility/getVariableContent'; // TODO: Circular dependency
 import { useRichTextEditor } from '@clinicaltoolkits/content-blocks';
 import { fetchDescriptiveRatingsComboboxData } from '../descriptive-ratings';
+import { getSupabaseClient } from '@clinicaltoolkits/ct-supabase';
 
 const fetchEntityComboboxData = async (): Promise<ComboboxData[]> => {
   const client = getSupabaseClient();
@@ -50,10 +51,10 @@ interface SectionModalProps {
 }
 
 export const VariableModal: React.FC<SectionModalProps> = ({ bOpened, onClose, variable, onSave }) => {
-  const [variableDraft, setVariableDraft] = useState<Variable>(mergeUndefined(variable, emptyVariable));
+  const [variableDraft, setVariableDraft] = useState<Variable>(wrapVariables(variable ? mergeUndefined<VariableData>(variable.toJSON(), createEmptyVariable().toJSON()) : createEmptyVariable().toJSON()));
   const [variablesComboboxData, setVariablesComboboxData] = useState<ComboboxData[]>([]);
-  const [bShowDescriptionBlock, setShowDescriptionBlock] = useState(variableDraft.content?.bCreateDescription);
-  const [bShowInterpretationBlock, setShowInterpretationBlock] = useState(variableDraft.content?.bCreateInterpretation);
+  const [bShowDescriptionBlock, setShowDescriptionBlock] = useState(variableDraft.getContent()?.bCreateDescription);
+  const [bShowInterpretationBlock, setShowInterpretationBlock] = useState(variableDraft.getContent()?.bCreateInterpretation);
   console.log("bShowDescriptionBlock: ", bShowDescriptionBlock);
   console.log("variableDraft: ", variableDraft);
   const [variableObjectConfig, setVariableObjectConfig] = useState<ObjectInfoConfig<Variable, ReactNode> | null>(null);
@@ -87,55 +88,61 @@ export const VariableModal: React.FC<SectionModalProps> = ({ bOpened, onClose, v
   }, [descriptionEditor, interpretationEditor, descriptionEditor?.isEditable, interpretationEditor?.isEditable, bShowDescriptionBlock, bShowInterpretationBlock]);
   
   useEffect(() => {
-    if (variableDraft.content?.bCreateDescription !== bShowDescriptionBlock) setShowDescriptionBlock(variableDraft.content?.bCreateDescription);
-    if (variableDraft.content?.bCreateInterpretation !== bShowInterpretationBlock) setShowInterpretationBlock(variableDraft.content?.bCreateInterpretation);
-  }, [variableDraft.content?.bCreateDescription, variableDraft.content?.bCreateInterpretation]);
+    if (variableDraft.getContent()?.bCreateDescription !== bShowDescriptionBlock) setShowDescriptionBlock(variableDraft.getContent()?.bCreateDescription);
+    if (variableDraft.getContent()?.bCreateInterpretation !== bShowInterpretationBlock) setShowInterpretationBlock(variableDraft.getContent()?.bCreateInterpretation);
+  }, [variableDraft.getContent()?.bCreateDescription, variableDraft.getContent()?.bCreateInterpretation]);
 
   useEffect(() => {
-    const newVariable = mergeUndefined(variable, emptyVariable);
-    if (!newVariable.idToken.variableId) newVariable.idToken.variableId = generateUUID();
+    const newVariableData = variable ? mergeUndefined<VariableData>(variable.toJSON(), createEmptyVariable().toJSON()) : createEmptyVariable().toJSON()
+    if (!newVariableData.idToken.variableId) newVariableData.idToken.variableId = generateUUID();
+    const newVariable = wrapVariables(newVariableData);
     setVariableDraft(newVariable);
     console.log("newVariable: ", newVariable);
   }, [variable]);
 
-  const handleVariableDraftPropertyUpdate = (id: string | number, path: PathsToFields<Variable>, value: any) => {
-    const updatedVariable = {...variableDraft};
+  const handleVariableDraftPropertyUpdate = (id: string | number, path: PathsToFields<VariableData>, value: any) => {
+    //const updatedVariable = {...variableDraft};
+    const updatedVariableData = {...variableDraft.toJSON()};
     if (path === 'metadata.visibility' || path === "metadata.percentileRankVisibility" || path === "metadata.descriptiveRatingVisibility") value = parseInt(value);
-    else if (path === 'idToken.entityId') setValueByPath(updatedVariable, "associatedEntityAbbreviatedName", entityRecords[value].abbreviatedName);
+    else if (path === 'idToken.entityId') setValueByPath(updatedVariableData, "associatedEntityAbbreviatedName", entityRecords[value].abbreviatedName);
     //else if(path === 'content.bCreateDescription') setShowDescriptionBlock(value); // Handled in useEffect
     //else if(path === 'content.bCreateInterpretation') setShowInterpretationBlock(value); // Handled in useEffect
-    setValueByPath(updatedVariable, path, value);
+    setValueByPath(updatedVariableData, path, value);
+
+    const updatedVariable = wrapVariables(updatedVariableData);
     setVariableDraft(updatedVariable);
     console.log("updatedVariable: ", updatedVariable);
   };
 
   // TODO: Currently, description and interpretation blocks can only be "not updated" (by setting corresponding checkbox to false), but deletion needs to occur manually in the database. Eventually move to a more robust solution.
   const handleSave = () => {
-    onSave({
-      ...variableDraft,
-      content: {
-        ...variableDraft.content,
-        description: variableDraft?.content?.bCreateDescription ? convertVariableContentToBlock(variableDraft, descriptionEditor, 'description') : undefined,
-        interpretation: variableDraft?.content?.bCreateInterpretation ? convertVariableContentToBlock(variableDraft, interpretationEditor, 'interpretation') : undefined,
-      },
-    });
+    const content = variableDraft.getContent();
+    const bCreateDescription = content?.bCreateDescription;
+    const bCreateInterpretation = content?.bCreateInterpretation;
+    const updatedVariable = variableDraft.withContent({
+      ...content,
+      description: bCreateDescription ? convertVariableContentToBlock(variableDraft, descriptionEditor, 'description') : undefined,
+      interpretation: bCreateInterpretation ? convertVariableContentToBlock(variableDraft, interpretationEditor, 'interpretation') : undefined,
+    })
+
+    onSave(updatedVariable);
     onClose();
   };
 
   const handleCopyVariableSelection = async (value: string) => {
     const variableToCopy = await fetchVariable({ variableId: value });
     if (variableToCopy) {
-      variableToCopy.idToken.cloneWithChanges({
-        variableId: variableDraft.idToken.variableId,
-      })
-      setVariableDraft(variableToCopy);
+      const updatedVariableToCopy = variableToCopy.withIdTokenChanges({
+        variableId: variableDraft.getVariableId()
+      });
+      setVariableDraft(updatedVariableToCopy);
     }
   }
 
   return (
     <Modal opened={bOpened} onClose={() => onClose()} title={`Edit Variable`} closeOnClickOutside={false} fullScreen>
       <Stack w={"100%"} align='center'>
-        <SingleSelectDropdown options={variablesComboboxData} label='Select Variable To Copy' value={variableDraft?.idToken.variableId} onChange={handleCopyVariableSelection} />
+        <SingleSelectDropdown options={variablesComboboxData} label='Select Variable To Copy' value={variableDraft?.getVariableId()} onChange={handleCopyVariableSelection} />
         { variableDraft && variableObjectConfig && <InfoFieldObjectProperties config={variableObjectConfig} data={variableDraft} onUpdate={handleVariableDraftPropertyUpdate} /> }
         <Button onClick={handleSave}>{"Save"}</Button>
       </Stack>

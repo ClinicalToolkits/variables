@@ -44,7 +44,7 @@ const getRowFormattingFromRowType = (rowType?: RowType, headerColour?: string): 
 
 // Function to create a content array for each variable, including only necessary columns
 const createContentArray = (variable: Variable, enclosure: [string, string], tableMetadata?: VariableTableMetadata): string[] => {
-  const contentArray = [variable.fullName, `${enclosure[0]}${variable.idToken.id}.value${enclosure[1]}`];
+  const contentArray = [variable.getFullName(), `${enclosure[0]}${variable.getId()}.value${enclosure[1]}`];
   const bIncludePercentileRank = tableMetadata?.bIncludePercentileRanks;
   const bIncludePercentileRange = tableMetadata?.bIncludePercentileRanges;
   const bIncludeDescriptor = tableMetadata?.bIncludeDescriptors;
@@ -52,29 +52,29 @@ const createContentArray = (variable: Variable, enclosure: [string, string], tab
 
   if (bIncludePercentileRank) {
     contentArray.push(
-      variable.metadata?.bCreatePercentileRank
-        ? `${enclosure[0]}${variable.idToken.id}_percentile_rank.value${enclosure[1]}`
+      variable.getMetadata()?.bCreatePercentileRank
+        ? `${enclosure[0]}${variable.getId()}_percentile_rank.value${enclosure[1]}`
         : " "
     );
   }
   if (bIncludePercentileRange) {
     contentArray.push(
-      variable.metadata?.bCreatePercentileRange
-        ? `${enclosure[0]}${variable.idToken.id}_percentile_range.value${enclosure[1]}`
+      variable.getMetadata()?.bCreatePercentileRange
+        ? `${enclosure[0]}${variable.getId()}_percentile_range.value${enclosure[1]}`
         : " "
     );
   }
   if (bIncludeDescriptor) {
     contentArray.push(
-      variable.metadata?.bCreateDescriptiveRating
-        ? `${enclosure[0]}${variable.idToken.id}_descriptor.value${enclosure[1]}`
+      variable.getMetadata()?.bCreateDescriptiveRating
+        ? `${enclosure[0]}${variable.getId()}_descriptor.value${enclosure[1]}`
         : " "
     );
   }
   if (bIncludePreviousScore) {
     contentArray.push(
-      variable.metadata?.bCreatePreviousScore
-        ? `${enclosure[0]}${variable.idToken.id}_previous_score.value${enclosure[1]}`
+      variable.getMetadata()?.bCreatePreviousScore
+        ? `${enclosure[0]}${variable.getId()}_previous_score.value${enclosure[1]}`
         : " "
     );
   }
@@ -133,7 +133,7 @@ export function generateSeparatedTableData({ variables, enclosure = ['', ''], ta
   let rowFormattingMap = new RowFormattingMap([[0, getRowFormattingFromRowType(RowType.HEADER, headerColour)]]);
 
   // Sort variables by their orderWithinSet for proper sequencing
-  variables.sort((a, b) => a.orderWithinSet - b.orderWithinSet);
+  variables.sort((a, b) => a.getOrderWithinSet() - b.getOrderWithinSet());
 
   // Append each variable's content array to the result
   variables.forEach((variable) => {
@@ -158,10 +158,10 @@ export function generateUnifiedTableData({ variables, enclosure = ['', ''], tabl
   let rowFormattingMap = new RowFormattingMap([[0, getRowFormattingFromRowType(RowType.HEADER, headerColour)]]);
 
   Object.values(groups).forEach((group, index, array) => {
-      group.sort((a, b) => a.orderWithinSet - b.orderWithinSet);
+      group.sort((a, b) => a.getOrderWithinSet() - b.getOrderWithinSet());
       group.forEach(variable => {
         const pushedIndex = result.push(createContentArray(variable, enclosure, tableMetadata)) - 1;
-        rowFormattingMap.set(pushedIndex, getRowFormattingFromRowType(variable.metadata?.tableRowType, headerColour));
+        rowFormattingMap.set(pushedIndex, getRowFormattingFromRowType(variable.getMetadata()?.tableRowType, headerColour));
       });
       // Add an empty row after each group, but not after the last group
       if (index < array.length - 1) {
@@ -194,23 +194,24 @@ export const filterVariablesForTable = (variables: Variable[], bRemoveUnusedVari
   const tableDataVariables: Variable[] = [];
   const tableFooterVariables: Variable[] = [];
   const tableMetadata = {
-    bIncludePercentileRanks: variables.some((variable) => variable.metadata?.bCreatePercentileRank),
-    bIncludePercentileRanges: variables.some((variable) => variable.metadata?.bCreatePercentileRange),
-    bIncludeDescriptors: variables.some((variable) => variable.metadata?.bCreateDescriptiveRating),
-    bIncludePreviousScores: variables.some((variable) => variable.metadata?.bCreatePreviousScore),
+    bIncludePercentileRanks: variables.some((variable) => variable.getMetadata()?.bCreatePercentileRank),
+    bIncludePercentileRanges: variables.some((variable) => variable.getMetadata()?.bCreatePercentileRange),
+    bIncludeDescriptors: variables.some((variable) => variable.getMetadata()?.bCreateDescriptiveRating),
+    bIncludePreviousScores: variables.some((variable) => variable.getMetadata()?.bCreatePreviousScore),
   };
 
   variables.forEach((variable) => {
+    const variableMetadata = variable.getMetadata();
     if (
-      (!bRemoveUnusedVariableRows || !isEmptyValue(variable.value)) &&
-      variable.metadata?.bIncludeInDynamicTable !== false && shouldDisplayVariable(variable)
+      (!bRemoveUnusedVariableRows || !isEmptyValue(variable.getValue())) &&
+      variableMetadata?.bIncludeInDynamicTable !== false && shouldDisplayVariable(variable)
     ) {
       tableDataVariables.push(variable);
-    } else if (shouldDisplayVariable(variable) && variable.metadata?.bIncludeInTableFooter === true) {
+    } else if (shouldDisplayVariable(variable) && variable.getMetadata()?.bIncludeInTableFooter === true) {
       tableFooterVariables.push(variable);
-    } else if (variable.metadata?.actionParams?.tableMetadataPath) {
-      const tableMetadataPath = variable.metadata.actionParams.tableMetadataPath;
-      const value = variable.value;
+    } else if (variableMetadata?.actionParams?.tableMetadataPath) {
+      const tableMetadataPath = variableMetadata.actionParams.tableMetadataPath;
+      const value = variable.getValue();
 
       if (typeof value === "boolean") {
         switch (tableMetadataPath) {
@@ -240,7 +241,7 @@ export const generateFooterData = (variables: Variable[], enclosure: [string, st
   const footerData: string[] = [];
 
   variables.forEach((variable) => {
-    footerData.push(`${variable.fullName}: ${enclosure[0]}${variable.idToken.id}.value${enclosure[1]}`);
+    footerData.push(`${variable.getFullName()}: ${enclosure[0]}${variable.getId()}.value${enclosure[1]}`);
   });
 
   return footerData;
@@ -285,8 +286,9 @@ export function groupVariablesByComposite(variables: Variable[]): Record<string,
   let standaloneVariables: Variable[] = [];
 
   variables.forEach(variable => {
-      if (variable.metadata?.associatedCompositeVariableIdToken || variable.metadata?.associatedSubvariableIds?.length) {
-          const groupId = variable.metadata.associatedCompositeVariableIdToken?.id || variable.idToken.id;
+    const metadata = variable.getMetadata();
+      if (metadata?.associatedCompositeVariableIdToken || metadata?.associatedSubvariableIds?.length) {
+          const groupId = metadata.associatedCompositeVariableIdToken?.id || variable.getId();
           if (!groups[groupId]) {
               groups[groupId] = [];
           }
@@ -306,10 +308,10 @@ export function groupVariablesByComposite(variables: Variable[]): Record<string,
 
 export const getTableTitle = (baseTitle: string, variables: Variable[], bUnifiedTable = false): string => {
   let title = baseTitle;
-
-  if (!bUnifiedTable && variables[0]?.subgroupTag) {
+  const subgroupTag = variables[0]?.getSubgroupTag();
+  if (!bUnifiedTable && subgroupTag) {
     const subTitle = capitalizeFirstLetter(
-      variables[0].subgroupTag?.metadata?.pluralName ?? `${variables[0].subgroupTag?.name}s`,
+      subgroupTag.metadata?.pluralName ?? `${subgroupTag.name}s`,
       true
     );
 

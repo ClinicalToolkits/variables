@@ -27,8 +27,8 @@ export type VariableSetDB = {
   entity_version_id: string;
   entity_id: string;
   abbreviated_name: string;
-  version?: number;
-  subversion?: string;
+  version?: number | null;
+  subversion?: string | null;
   variable_ids: VariableIdsBySubgroup;
   metadata?: VariableSetMetadataDB;
 }

@@ -25,7 +25,7 @@ export const VariableResultsTable: React.FC<VariableResultsTableProps> = ({ sele
         (value: string) => {
           const variableId = value.split(".")?.[0];
           const variable = variableMap.get(variableId);
-          let variableValue = variable?.value ? getVariableValueAsString(variable.value, variable.dataType) : value;
+          let variableValue = variable?.getValue() ? getVariableValueAsString(variable.getValue(), variable.getDataType()) : value;
           return variableValue;
         }
       );
@@ -39,14 +39,14 @@ export const VariableResultsTable: React.FC<VariableResultsTableProps> = ({ sele
         return tableFooterVariables ? (
           <Stack>
             {tableFooterVariables.map((variable) => {
-              const recentVariable = variableMap.get(variable.idToken.id);
-              const variableValue = recentVariable?.value
-              const dataType = recentVariable?.dataType;
+              const recentVariable = variableMap.get(variable.getId());
+              const variableValue = recentVariable?.getValue()
+              const dataType = recentVariable?.getDataType();
               if (variableValue && dataType) {
                 const value = getVariableValueAsString(variableValue, dataType);
                 return (
                   <Text fs={"italic"} ta={"right"}>
-                    {variable.fullName}: {value}
+                    {variable.getFullName()}: {value}
                   </Text>
                 );
               }

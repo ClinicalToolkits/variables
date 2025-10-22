@@ -9,7 +9,7 @@ const plugins = [
     template: path.resolve(__dirname, 'public', 'index.html'),
     filename: 'index.html',
     hash: true,
-    favicon: path.resolve(__dirname, 'node_modules', '@clinicaltoolkits/universal-react-components/dist/assets/Logo/SVG/CTLogo_Favicon.svg')
+    favicon: require.resolve('@clinicaltoolkits/universal-react-components/favicon')
   }),
   new webpack.EnvironmentPlugin(env),
 ];

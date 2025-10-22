@@ -1,8 +1,8 @@
-import { generateUUID } from "@clinicaltoolkits/type-definitions";
-import { getSupabaseClient, logger } from "@clinicaltoolkits/utility-functions";
+import { logger } from "@clinicaltoolkits/utility-functions";
 import { convertVariableToDBVariable } from "./utility";
 import { Variable } from "../types";
 import { upsertVariableContent } from "../utility";
+import { getSupabaseClient } from "@clinicaltoolkits/ct-supabase";
 
 export async function upsertVariable(variable: Variable) {
   try {
@@ -11,7 +11,7 @@ export async function upsertVariable(variable: Variable) {
 
     const { data, error } = await supabaseClient
       .from('variables')
-      .upsert(dbVariable)
+      .upsert(dbVariable as any) // TODO: fix types - should not need 'as any'
       .select();
     
   
@@ -33,7 +33,7 @@ async function batchUpsertVariable(variables: Variable[]) {
     
     const { data, error } = await supabaseClient
       .from('variables')
-      .upsert(dbVariables)
+      .upsert(dbVariables as any) // TODO: fix types - should not need 'as any'
       .select();
     
     if (error) {

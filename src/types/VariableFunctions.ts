@@ -1,5 +1,5 @@
 import { PathsToFields } from "@clinicaltoolkits/type-definitions";
-import { Variable, VariableValue } from "./Variable";
+import { Variable, VariableData, VariableValue } from "./Variable";
 
 /**
  * Function type definition for adding a variable.
@@ -30,9 +30,9 @@ export type SetVariableFunction = (id: string, value: VariableValue) => void;
  * @param {PathsToFields<Variable>} property - The property of the variable to be set.
  * @param {any} value - The value to update the property with.
  */
-export type SetVariablePropertyFunction = (id: string, propertyPath: PathsToFields<Variable>, value: any) => void;
+export type SetVariablePropertyFunction = (id: string, propertyPath: PathsToFields<VariableData>, value: any) => void;
 
-export type BatchSetVariablePropertyFunction = (ids: string[], propertyPath: PathsToFields<Variable>, value: any) => void;
+export type BatchSetVariablePropertyFunction = (ids: string[], propertyPath: PathsToFields<VariableData>, value: any) => void;
 
 /** Function type definition for setting the entire variable.
  * @param {Variable} variable - The variable object to be set.

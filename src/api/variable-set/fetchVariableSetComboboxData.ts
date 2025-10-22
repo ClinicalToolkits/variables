@@ -1,6 +1,7 @@
 
-import { createLabel, getSupabaseClient } from "@clinicaltoolkits/utility-functions";
+import { createLabel } from "@clinicaltoolkits/utility-functions";
 import { ComboboxData, ID_SEPERATOR } from "@clinicaltoolkits/type-definitions";
+import { getSupabaseClient } from "@clinicaltoolkits/ct-supabase";
 
 // Function for only retrieving the combobox data for variable sets (i.e., only retrieving the entity_version_id, entity_id, abbreviated_name, version, and subversion);
 export const fetchVariableSetComboboxData = async (): Promise<ComboboxData[]> => {
@@ -17,7 +18,7 @@ export const fetchVariableSetComboboxData = async (): Promise<ComboboxData[]> =>
     }
 
     // Convert the data to combobox data
-    const transformedData = data ? data.map((variableSetColumns) => ({
+    const transformedData = data ? (data).map((variableSetColumns: any) => ({ // TODO: fix types - should not need 'as any'
         id: variableSetColumns.entity_id + ID_SEPERATOR + variableSetColumns.entity_version_id,
         label: createLabel({abbreviatedName: variableSetColumns.abbreviated_name, version: variableSetColumns.version, subversion: variableSetColumns.subversion}),
     })) : [];

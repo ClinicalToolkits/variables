@@ -2,8 +2,9 @@ import { Variable, VariableMap } from "../../../../types";
 
 export const getNonNullAssociatedSubvariableKeys = (variable: Variable): string[] => {
   let nonNullKeys: string[] = [];
-  if (variable.metadata?.associatedSubvariableProperties) {
-    variable.metadata.associatedSubvariableProperties.forEach((subvariable) => {
+  const associatedSubvariableProperties = variable.getMetadata()?.associatedSubvariableProperties;
+  if (associatedSubvariableProperties) {
+    associatedSubvariableProperties.forEach((subvariable) => {
       if (subvariable.bValueEntered) {
         nonNullKeys.push(subvariable.id);
       }
@@ -17,6 +18,6 @@ export const getNonNullAssociatedSubvariableKeys = (variable: Variable): string[
 export const getNonNullAssociatedSubvariableNames = (variable: Variable, variableMap: VariableMap): string[] => {
   const nonNullKeys = getNonNullAssociatedSubvariableKeys(variable);
   return nonNullKeys.map(key => {
-    return variableMap.get(key)?.fullName || "Unknown";
+    return variableMap.get(key)?.getFullName() || "Unknown";
   });
 };

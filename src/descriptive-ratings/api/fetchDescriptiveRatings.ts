@@ -1,5 +1,5 @@
-import { getSupabaseClient } from "@clinicaltoolkits/utility-functions";
-import { toCamelCaseKeys } from "@clinicaltoolkits/utility-functions";
+import { getSupabaseClient } from "@clinicaltoolkits/ct-supabase";
+import { TextOps } from "@clinicaltoolkits/utility-functions";
 import { DescriptiveRating, DescriptiveRatingSet } from "../types";
 
 export const fetchDescriptiveRatingSets = async (descriptiveRatingIds?: string[]): Promise<DescriptiveRatingSet[]> => {
@@ -8,7 +8,7 @@ export const fetchDescriptiveRatingSets = async (descriptiveRatingIds?: string[]
     .from("descriptive_rating_sets")
     .select(`*`)
   if (descriptiveRatingIds) {
-    query = query.in("id", descriptiveRatingIds);
+    query = query.in("id", descriptiveRatingIds as any); // TODO: fix types - should not need 'as any'
   }
 
   try {
@@ -19,11 +19,11 @@ export const fetchDescriptiveRatingSets = async (descriptiveRatingIds?: string[]
       throw new Error(`Supabase error: ${error.message}`);
     }
 
-    data.forEach((datum) => {
+    (data as any).forEach((datum: any) => { // TODO: fix types - should not need 'as any' or 'datum: any'
       datum.id = datum.id.toString();
     });
 
-    return data ? toCamelCaseKeys(data) : [];
+    return data ? TextOps.toCamelKeys(data) as any : []; // TODO: fix types - should not need 'as any'
   } catch (error) {
     console.error(`Failed to fetch descriptive ratings. Printing error: `, error);
     throw error;

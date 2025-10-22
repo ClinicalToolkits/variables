@@ -1,4 +1,4 @@
-import { Visibility, isVisible } from "@clinicaltoolkits/type-definitions";
+import { isVisible } from "@clinicaltoolkits/type-definitions";
 import { VariableMap, Variable } from "../../../types";
 import { logger } from "@clinicaltoolkits/utility-functions";
 
@@ -24,9 +24,8 @@ export const shouldDisplayVariableSubgroup = (subgroupName?: string, section?: S
 */
 
 export const shouldDisplayVariable = (variable: Variable) => {
-  const bShouldDisplay = isVisible(variable.metadata?.visibility);
-  logger.debug("shouldDisplayVariable - variable: ", { variable, bShouldDisplay });
-  return bShouldDisplay;
+  logger.debug("shouldDisplayVariable - variable: ", { variable, shouldDisplay: variable.isVisible() });
+  return variable.isVisible();
 };
 
 /*

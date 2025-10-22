@@ -1,5 +1,5 @@
 
-import { getSupabaseClient } from "@clinicaltoolkits/utility-functions";
+import { getSupabaseClient } from "@clinicaltoolkits/ct-supabase";
 import { convertVariableSetDBToVariableSet } from "./convertVariableSetDBToVariableSet";
 import { VariableSet } from "../../types";
 

@@ -5,10 +5,10 @@ import { clampMax, clampMin, logger } from "@clinicaltoolkits/utility-functions"
 export const getRandomeVariableValue = (variable: Variable): VariableValue => {
   let value: VariableValue;
 
-  switch (variable.dataType) {
+  switch (variable.getDataType()) {
     case DataType.TEXT:
     case DataType.QUALITATIVE:
-      value = variable.abbreviatedName;
+      value = variable.getAbbreviatedName();
       break;
     case DataType.SCALED_SCORE:
       value = Math.floor(Math.random() * 20);
@@ -34,7 +34,7 @@ export const getRandomeVariableValue = (variable: Variable): VariableValue => {
         months: Math.floor(Math.random() * 12),
       }
     default:
-      logger.error(`getRandomVariableValue() - Variable: ${variable.abbreviatedName} has an unsupported data type: ${variable.dataType}. Skipping value generation.`);
+      logger.error(`getRandomVariableValue() - Variable: ${variable.getAbbreviatedName()} has an unsupported data type: ${variable.getDataType()}. Skipping value generation.`);
   }
 
   return value;

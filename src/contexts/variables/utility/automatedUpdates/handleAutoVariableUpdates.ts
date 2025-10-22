@@ -9,7 +9,7 @@ export const handleAutoVariableUpdates =(updatedVariableId: string, updatedValue
   if (updatedVariable && !isEmptyValue(updatedValue)) {
     switch (updatedVariableId) {
       case getDemographicsId(DEMOGRAPHICS.GENDER): {
-        const pronounIds = updatedVariable.metadata?.associatedSubvariableProperties?.map((subvariableProperty) => {
+        const pronounIds = updatedVariable.getMetadata()?.associatedSubvariableProperties?.map((subvariableProperty) => {
           return subvariableProperty.id;
         });
         if (pronounIds && typeof updatedValue === "string") handleAutoPronounUpdates(updatedValue, pronounIds, variableMap, setVariable);

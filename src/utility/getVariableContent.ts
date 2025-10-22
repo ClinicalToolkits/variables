@@ -14,15 +14,17 @@ import {
   upsertTemplateBlock,
   contentBlockStore,
 } from "@clinicaltoolkits/content-blocks";
-import { getSupabaseClient, logger, RegexRuleArray } from "@clinicaltoolkits/utility-functions";
+import { logger, RegexRuleArray } from "@clinicaltoolkits/utility-functions";
 import { CURLY_BRACE_ENCLOSURE } from "@clinicaltoolkits/type-definitions";
-import { Variable, VariableContent, VariableMap } from "../types";
+import { Variable, VariableContent, VariableData, VariableMap, wrapVariables } from "../types";
 import { shouldDisplayVariable } from "../contexts";
 import { Editor } from '@tiptap/react';
 import { getVariableAffixRules, removePrefixesFromVariablesRule } from "./variableIdFunctions";
+import { getSupabaseClient } from "@clinicaltoolkits/ct-supabase";
 
 export const convertVariableContentToBlock = (inVariable: Variable, inEditor: Editor | null, inPropertyKey: 'description' | 'interpretation'): ITemplateBlock => {
   if (!inEditor) throw new Error("Editor is null or undefined");
+  const variableData = inVariable.toJSON();
   let templateBlock: ITemplateBlock;
 
   // Convert info field nodes to placeholders in the specified editor
@@ -30,18 +32,18 @@ export const convertVariableContentToBlock = (inVariable: Variable, inEditor: Ed
   const updatedBlocks = convertTipTapJSONToBlocks(inEditor.getJSON());
 
   // Update the specified property using the propertyKey
-  if (inVariable.content) {
-    if (!inVariable.content[inPropertyKey]) {
+  if (variableData.content) {
+    if (!variableData.content[inPropertyKey]) {
       templateBlock = createTemplateBlock({
         property: inPropertyKey === 'description' ? 'description' : 'interpretation',
         blocks: updatedBlocks,
-        entityId: inVariable.idToken.entityId,
-        entityVersionId: inVariable.idToken.entityVersionId,
-        variableId: inVariable.idToken.variableId,
+        entityId: inVariable.getEntityId(),
+        entityVersionId: inVariable.getEntityVersionId(),
+        variableId: inVariable.getVariableId(),
       });
-      inVariable.content[inPropertyKey] = templateBlock;
+      variableData.content[inPropertyKey] = templateBlock;
     } else {
-      templateBlock = { ...inVariable.content[inPropertyKey] };
+      templateBlock = { ...variableData.content[inPropertyKey] };
       templateBlock.blocks = updatedBlocks;
     }
   } else {
@@ -59,25 +61,26 @@ export const upsertVariableContent = async ({ inVariable }: IUpsertVariableConte
   // Set up regex rules and parameters
   const affixParams: IAffixParams = {
     inEnclosure: CURLY_BRACE_ENCLOSURE,
-    inPrefixToRemove: inVariable.idToken.prefix,
+    inPrefixToRemove: inVariable.getIdToken().prefix,
   };
   const regexRules: RegexRuleArray = [removePrefixesFromVariablesRule(affixParams)];
 
   try {
+    const variableContent = inVariable.getContent();
     const contentUpserts: Promise<unknown>[] = [];
-    if (inVariable.content?.bCreateDescription && inVariable.content.description) {
+    if (variableContent?.bCreateDescription && variableContent.description) {
       contentUpserts.push(
         upsertTemplateBlock({
-          inTemplateBlock: inVariable.content.description,
+          inTemplateBlock: variableContent.description,
           inAffixParams: affixParams,
           inRegexRules: regexRules,
         })
       );
     }
-    if (inVariable.content?.bCreateInterpretation && inVariable.content.interpretation) {
+    if (variableContent?.bCreateInterpretation && variableContent.interpretation) {
       contentUpserts.push(
         upsertTemplateBlock({
-          inTemplateBlock: inVariable.content.interpretation,
+          inTemplateBlock: variableContent.interpretation,
           inAffixParams: affixParams,
           inRegexRules: regexRules,
         })
@@ -151,23 +154,23 @@ export const fetchVariableDescription = async (inDbVariableId: string): Promise<
   return variableContent?.description;
 };
 
-export const getVariableContent = (inVariable: Variable): VariableContent | undefined => {
+/*export const getVariableContent = (inVariable: Variable): VariableContent | undefined => {
   return inVariable.content || undefined;
-};
-export const setVariableContent = (inVariable: Variable, inContent: VariableContent | undefined) => {
+};*/
+export const setVariableContent = (inVariable: VariableData, inContent: VariableContent | undefined) => {
   inVariable.content = inContent;
   if (inVariable.content?.description) inVariable.content.bCreateDescription = true;
   if (inVariable.content?.interpretation) inVariable.content.bCreateInterpretation = true;
 };
 
 export const getContentBlocksFromVariableDescription = (inVariable: Variable): ContentBlock[] | undefined => {
-  const descriptionBlock = getVariableContent(inVariable)?.description;
+  const descriptionBlock = inVariable.getContent()?.description;
   if (!descriptionBlock) return undefined;
   return getContentBlocksFromTemplateBlock(descriptionBlock);
 };
 export const getVariableDescriptionAsString = (inVariable: Variable): string => {
   const singleVariableMapInstance = new Map<string, Variable>();
-  singleVariableMapInstance.set(inVariable.idToken.id, inVariable);
+  singleVariableMapInstance.set(inVariable.getId(), inVariable);
   const getValueFromObject = (objectMap: Map<string, Variable>, path: string, bRemoveEmptyContent?: boolean) => {
     const variable = objectMap.get(path);
     return variable;
@@ -175,18 +178,18 @@ export const getVariableDescriptionAsString = (inVariable: Variable): string => 
   return getContentBlocksFromVariableDescription(inVariable)?.map((block) => getTextFromContentBlock(block, false, singleVariableMapInstance, getValueFromObject, undefined)).join(" ") || "";
 };
 export const setVariableDescriptionContentBlocks = (inVariable: Variable, inContentBlocks: ContentBlock[]): Variable => {
-  // Clone the variable to avoid mutating the original object
-  const updatedVariable = { ...inVariable };
+  // Convert the variable to JSON to avoid mutating the original object
+  const variableData = inVariable.toJSON();
 
-  updatedVariable.content = updatedVariable.content || {};
-  if (!updatedVariable.content.description) throw Error("setVariableDescriptionContentBlocks() - Can't set content blocks, variable does not have a parent description block.");
-  updatedVariable.content.description.blocks = inContentBlocks;
-  return updatedVariable;
+  variableData.content = variableData.content || {};
+  if (!variableData.content.description) throw Error("setVariableDescriptionContentBlocks() - Can't set content blocks, variable does not have a parent description block.");
+  variableData.content.description.blocks = inContentBlocks;
+  return wrapVariables(variableData);
 };
 
 export const getContentBlocksFromVariableInterpretation = (inVariable: Variable, variableMap: VariableMap, bRemoveUnusedContentControls: boolean): ContentBlock[] | undefined => {
   //const variableId = inVariable.idToken.databaseId as string;
-  let interpretationBlocks: ContentBlock[] | undefined = getVariableContent(inVariable)?.interpretation?.blocks;
+  let interpretationBlocks: ContentBlock[] | undefined = inVariable.getContent()?.interpretation?.blocks;
   if (!interpretationBlocks) return undefined;
 
   const conditionalBlock = interpretationBlocks[0];
@@ -196,11 +199,11 @@ export const getContentBlocksFromVariableInterpretation = (inVariable: Variable,
 }
 
 export const setVariableInterpretationContentBlocks = (inVariable: Variable, inContentBlocks: ContentBlock[]): Variable => {
-  // Clone the variable to avoid mutating the original object
-  const updatedVariable = { ...inVariable };
+  // Convert the variable to JSON to avoid mutating the original object
+  const variableData = inVariable.toJSON();
 
-  updatedVariable.content = updatedVariable.content || {};
-  if (!updatedVariable.content.interpretation) throw Error("setVariableInterpretationContentBlocks() - Can't set content blocks, variable does not have a parent interpretation block.");
-  updatedVariable.content.interpretation.blocks = inContentBlocks;
-  return updatedVariable;
+  variableData.content = variableData.content || {};
+  if (!variableData.content.interpretation) throw Error("setVariableInterpretationContentBlocks() - Can't set content blocks, variable does not have a parent interpretation block.");
+  variableData.content.interpretation.blocks = inContentBlocks;
+  return wrapVariables(variableData);
 };

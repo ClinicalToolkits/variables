@@ -65,13 +65,14 @@ export function getPercentileRank(inScore: string | number, inDataType: DataType
 }
 
 export const getPercentileRankFromParentVariable = (parentVariable: Variable): string => {
-  if (parentVariable.value === null || parentVariable.value === undefined || (typeof parentVariable.value !== "string" && typeof parentVariable.value !== "number")) {
+  const value = parentVariable.getValue();
+  if (value === null || value === undefined || (typeof value !== "string" && typeof value !== "number")) {
     console.error("getPercentileRankFromVariable returning: Invalid score!");
     return "Invalid score!";
-  } else if (parentVariable.metadata?.bNormallyDistributed === false) {
+  } else if (parentVariable.getMetadata()?.bNormallyDistributed === false) {
     return "N/A";
   }
-  const score: string | number = parentVariable.value;
-  const dataType = parentVariable.dataType;
+  const score: string | number = value;
+  const dataType = parentVariable.getDataType();
   return getPercentileRank(score, dataType);
 }

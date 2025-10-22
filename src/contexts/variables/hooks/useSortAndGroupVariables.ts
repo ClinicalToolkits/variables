@@ -34,21 +34,21 @@ export const useSortAndGroupVariables = (
           groupedAndSorted[subgroupName] = new Map<string, Variable>();
         }
 
-        const isChildVariable = variable?.metadata?.properties?.childVariable?.parentVariableId !== undefined;
+        const isChildVariable = variable?.getMetadata()?.properties?.childVariable?.parentVariableId !== undefined;
         if (isChildVariable) return;
 
-        groupedAndSorted[subgroupName].set(variable.idToken.id, variable);
+        groupedAndSorted[subgroupName].set(variable.getId(), variable);
 
         const childVariables = getChildVariables(variable);
         childVariables?.forEach(childVariable => {
-          groupedAndSorted[subgroupName].set(childVariable.idToken.id, childVariable);
+          groupedAndSorted[subgroupName].set(childVariable.getId(), childVariable);
         });
       });
 
     // Optionally sort groups by the order within each group
     Object.keys(groupedAndSorted).forEach(groupName => {
       const sortedMap = new Map([...groupedAndSorted[groupName]].sort((a, b) => {
-        return a[1].orderWithinSet - b[1].orderWithinSet;
+        return a[1].getOrderWithinSet() - b[1].getOrderWithinSet();
       }));
       groupedAndSorted[groupName] = sortedMap;
     });
@@ -58,7 +58,7 @@ export const useSortAndGroupVariables = (
       if (groupedAndSorted[groupName].size === 0) {
         delete groupedAndSorted[groupName];
       } else {
-        const bAllVariablesHidden = Array.from(groupedAndSorted[groupName].values()).every(variable => isHidden(variable.metadata?.visibility));
+        const bAllVariablesHidden = Array.from(groupedAndSorted[groupName].values()).every(variable => variable.isHidden());
         if (bAllVariablesHidden) {
           delete groupedAndSorted[groupName];
         }
@@ -72,5 +72,5 @@ export const useSortAndGroupVariables = (
 };
 
 export const sortVariables = (variables: Variable[]): Variable[] => {
-  return variables.sort((a, b) => a.orderWithinSet - b.orderWithinSet);
+  return variables.sort((a, b) => a.getOrderWithinSet() - b.getOrderWithinSet());
 };

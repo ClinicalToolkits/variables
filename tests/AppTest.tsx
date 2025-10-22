@@ -1,11 +1,13 @@
 import React, { ReactNode, useEffect } from 'react';
-import { Container, MantineProvider } from '@mantine/core';
+import { Container, MantineProvider, mergeThemeOverrides } from '@mantine/core';
 import { InputFieldRegistryProvider, ThemeKeys, TooltipProvider, containerStyles, resolver, themes } from '@clinicaltoolkits/universal-react-components';
-import { createCTSupabaseClient, getSupabaseClient, logger, setSupabaseClient } from '@clinicaltoolkits/utility-functions';
+import { logger } from '@clinicaltoolkits/utility-functions';
 import { DescriptiveRatingTable, VariableProvider, VariableSetSelector, VariableTable, fetchVariableSets, useVariableContext, variableComponentRegistry, variableTypesWithTwoFields } from '../src/index';
 import { useEditor } from "@tiptap/react";
 import { contentBlockComponentRegistry, ContentBlockWrapperOptionsProvider, defaultExtensions } from '@clinicaltoolkits/content-blocks';
 import { RichTextEditor as MantineRichTextEditor } from '@mantine/tiptap';
+import { cssVariableOverrides, themeOverridesTest } from './themeOverridesTest';
+import { createCTSupabaseClient, getSupabaseClient, setSupabaseClient } from '@clinicaltoolkits/ct-supabase';
 
 const componentRegistry = {
   ...variableComponentRegistry,
@@ -15,7 +17,7 @@ const componentRegistry = {
 interface TestContextWrapperProps {
   children?: ReactNode;  // Define children as an optional prop
 }
-
+const mergedTheme = mergeThemeOverrides(themes[ThemeKeys.Default], themeOverridesTest);
 export const TestContextWrapper: React.FC<TestContextWrapperProps> = ({ children }) => {
   const ctSupabaseClientConfig = {
     anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cWdva29wc2Ntc2doa3BhcHdlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY5MTEyMjcxMCwiZXhwIjoyMDA2Njk4NzEwfQ.O9oWtzaMPe5rzs_xt9rieWsw4iROMu42XEja1iIdqA4" // This is the servic_role key it should only be used for testing, allows overriding RLS policies
@@ -24,7 +26,7 @@ export const TestContextWrapper: React.FC<TestContextWrapperProps> = ({ children
   setSupabaseClient(supabaseClient);
 
   return (
-    <MantineProvider theme={themes[ThemeKeys.Default]} cssVariablesResolver={resolver(ThemeKeys.Default)} defaultColorScheme='auto'>
+    <MantineProvider theme={mergedTheme} cssVariablesResolver={resolver(ThemeKeys.Default, cssVariableOverrides)} defaultColorScheme='auto'>
       <InputFieldRegistryProvider registry={componentRegistry} dataTypesWithTwoFields={variableTypesWithTwoFields}>
         <TooltipProvider>
           <VariableProvider>

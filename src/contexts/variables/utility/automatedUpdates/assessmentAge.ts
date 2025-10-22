@@ -11,8 +11,8 @@ export const handleAutoAssessmentAgeUpdates = (variableId: string, updatedValue:
   const bAssessmentEndDateUpdated = variableId === assessmentEndDateId;
 
   if (bDateOfBirthUpdated || bAssessmentEndDateUpdated) {
-    const dateOfBirth = bDateOfBirthUpdated ? updatedValue : variableMap.get(dateOfBirthId)?.value;
-    const assessmentEndDate = bAssessmentEndDateUpdated ? updatedValue : variableMap.get(assessmentEndDateId)?.value;
+    const dateOfBirth = bDateOfBirthUpdated ? updatedValue : variableMap.get(dateOfBirthId)?.getValue();
+    const assessmentEndDate = bAssessmentEndDateUpdated ? updatedValue : variableMap.get(assessmentEndDateId)?.getValue();
     if (!isEmptyValue(dateOfBirth) && !isEmptyValue(assessmentEndDate)) {
       const ageInMonths = calculateAgeInMonths(dateOfBirth as string, assessmentEndDate as string);
       if (typeof ageInMonths === "number") {

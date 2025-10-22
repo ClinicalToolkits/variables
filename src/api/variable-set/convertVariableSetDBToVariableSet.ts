@@ -2,7 +2,7 @@ import { abbreviateString, createLabel } from "@clinicaltoolkits/utility-functio
 import { createVariableSet } from "./createVariableSet";
 import { VariableSetDB, VariableSet, VariableSetMetadataDB, VariableSetMetadata, VariableIdToken } from "../../types";
 
-interface CreateVariableSetDBLabelParams {
+export interface CreateVariableSetDBLabelParams {
   abbreviatedName: string;
   version?: number;
   subversion?: string;

@@ -30,11 +30,12 @@ export function getDescriptor(
 }
 
 export function getDescriptorFromParentVariable(parentVariable: Variable, inDescriptiveRatings?: DescriptiveRating[]): string {
-  if (parentVariable.value === null || parentVariable.value === undefined || (typeof parentVariable.value !== "string" && typeof parentVariable.value !== "number")) {
+  const value = parentVariable.getValue();
+  if (value === null || value === undefined || (typeof value !== "string" && typeof value !== "number")) {
     console.error("getDescriptorFromVariable returning: Invalid score!");
     return "Invalid scores!";
   }
-  const score: string | number = parentVariable.value;
-  const dataType = parentVariable.dataType;
+  const score: string | number = value;
+  const dataType = parentVariable.getDataType();
   return getDescriptor(score, dataType, inDescriptiveRatings);
 }

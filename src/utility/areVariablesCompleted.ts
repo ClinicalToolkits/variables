@@ -11,7 +11,7 @@ export interface AreVariableSetCompletedParams {
   
     if (variables) {
       variables.forEach((variable) => {
-        const { value } = variable;
+        const value = variable.getValue();
         if (shouldDisplayVariable(variable) && (isEmptyValue(value) || value === "-")) {
           bSectionCompleted = false;
         }

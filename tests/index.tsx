@@ -1,6 +1,8 @@
 import '@mantine/core/styles.layer.css';
-import "@clinicaltoolkits/universal-react-components/dist/styles/global.css";
 import '@mantine/tiptap/styles.css';
+import '@mantine/dates/styles.layer.css';
+import "@clinicaltoolkits/universal-react-components/styles";
+
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { TestContextWrapper } from './AppTest';

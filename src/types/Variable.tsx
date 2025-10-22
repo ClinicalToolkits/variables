@@ -1,12 +1,77 @@
 import React, { ReactNode, useMemo } from "react";
-import { Editor } from "@tiptap/react";
 import { ExtendedHoverCardProps } from "@clinicaltoolkits/universal-react-components";
-import { RegexRuleArray } from "@clinicaltoolkits/utility-functions";
-import { UUID, DataType, Tag, InfoFieldConfig, ComboboxData, ObjectInfoConfig, Age, emptyTag, asUUID, ID_SEPERATOR, Visibility, convertEnumToComboboxDataArray, generateUUID } from "@clinicaltoolkits/type-definitions";
-import { ContentBlock, IAffixParams, ITemplateBlock } from "@clinicaltoolkits/content-blocks";
+import { isEmptyValue, logger, makeModel, RegexRuleArray } from "@clinicaltoolkits/utility-functions";
+import { UUID, DataType, Tag, InfoFieldConfig, ComboboxData, ObjectInfoConfig, Age, emptyTag, asUUID, ID_SEPERATOR, EVisibility, convertEnumToComboboxDataArray, generateUUID, isHidden, isVisible } from "@clinicaltoolkits/type-definitions";
+import { ContentBlock, IAffixParams, ITemplateBlock, Editor } from "@clinicaltoolkits/content-blocks";
 import { DBVariableMetadata, VariableMetadata, emptyVariableMetadata } from "./VariableMetadata";
 import { renderVariableTooltipContent } from "../contexts/variables/utility/child-variables/renderVariableTooltipContent";
 
+export interface VariableData {
+  id: string;
+  idToken: VariableIdToken;
+  fullName: string;
+  abbreviatedName: string;
+  label: string;
+  variableSetId?: string;
+  tagIds?: number[];
+  tags?: Tag[];
+  dataType: DataType;
+  value: VariableValue;
+  subgroupTag: Tag | null;
+  orderWithinSet: number;
+  content?: VariableContent | null;
+  metadata?: VariableMetadata | null;
+  associatedEntityAbbreviatedName?: string;
+  entityId?: string;
+  entityVersionId?: string;
+  templateVariableId?: string | null;
+}
+
+interface ExtraVariableMethods {
+  isHidden(): boolean;
+  isVisible(): boolean;
+  getVariableId(): string;
+  getDatabaseId(): UUID;
+  withIdTokenChanges(changes: Partial<ConstructorParameters<typeof VariableIdToken>[0]>): Variable;
+}
+// TODO: Currently lax is required to allow for the use of InfoFieldConfig with Variable model; ideally we would tighten this to strict later.
+const VariableModel = makeModel<VariableData, "lax", ExtraVariableMethods>('Variable', {
+  getters: {
+    // central switch: change ID derivation here, not at call sites
+    id: (self) => self.idToken?.id ?? self.id,
+  },
+  extras: {
+    isHidden() {
+      return isHidden(this.getMetadata()?.visibility);
+    },
+    isVisible() {
+      return isVisible(this.getMetadata()?.visibility);
+    },
+    getVariableId() {
+      return this.getIdToken().variableId;
+    },
+    getDatabaseId() {
+      return this.getIdToken().databaseId;
+    },
+    // compose: clone the token and replace it immutably
+    withIdTokenChanges(changes: Partial<ConstructorParameters<typeof VariableIdToken>[0]>) {
+      const next = this.getIdToken().cloneWithChanges(changes);
+      return this.withIdToken(next);
+    },
+  },
+  immutable: true,
+}, "lax");
+
+// Public API with de-conflicted names:
+export type Variable = ReturnType<typeof VariableModel['create']>;
+
+export const createVariable = VariableModel.create;
+export const wrapVariables = VariableModel.wrap;
+export const isVariable = VariableModel.is;
+
+// Optional export—omit if you don’t need it; included here for completeness; allows .
+// For example, you might use this in the following way: `class MyVar extends VariableProto { ... }`
+// export const VariableProto = VariableModel.proto;
 
 export class VariableIdToken {
   variableId: string;
@@ -61,6 +126,7 @@ export interface DBVariable {
   associated_entity_abbreviated_name?: string;
   entity_id?: string;
   entity_version_id?: string;
+  template_variable_id?: string | null;
 }
 
 /**
@@ -74,8 +140,10 @@ export interface DBVariable {
  * @param {DataType} dataType - The data type of the variable (e.g., t_score, date, qualitative, etc.). Full list of data types can be found in `src/utility/enums/DataType.tsx`.
  * @param {VariableValue} value - The current value of the variable. Starts off as an empty string.
  * @param {VariableMetadata | null} metadata - The metadata of the variable, can be left null in the database so must check before use.
- */
+ *
+
 export interface Variable {
+  id: string;
   idToken: VariableIdToken;
   fullName: string;
   abbreviatedName: string;
@@ -92,29 +160,37 @@ export interface Variable {
   associatedEntityAbbreviatedName?: string;
   entityId?: string;
   entityVersionId?: string;
+  templateVariableId?: string | null;
 }
+
 export const getVariableFullName = (variable: Variable): string => variable.fullName;
 export const getVariableValue = (variable: Variable): VariableValue => variable.value;
 export const getVariableMetadata = (variable: Variable): VariableMetadata | null | undefined => variable.metadata;
-export const emptyVariable: Variable = {
-  idToken: new VariableIdToken({ variableId: generateUUID(), entityId: undefined, entityVersionId: undefined }),
-  fullName: "",
-  abbreviatedName: "",
-  label: "",
-  variableSetId: "",
-  tagIds: [],
-  dataType: DataType.UNKNOWN,
-  value: "",
-  subgroupTag: emptyTag,
-  orderWithinSet: 0,
-  metadata: emptyVariableMetadata,
-  associatedEntityAbbreviatedName: "",
-  entityId: "",
-  entityVersionId: "",
-  content: {
-    bCreateDescription: false,
-    bCreateInterpretation: false,
-  },
+*/
+export const createEmptyVariable = (): Variable => {
+  const variableId = generateUUID();
+  return createVariable({
+    id: variableId,
+    idToken: new VariableIdToken({ variableId: variableId, entityId: undefined, entityVersionId: undefined }),
+    fullName: "",
+    abbreviatedName: "",
+    label: "",
+    variableSetId: "",
+    tagIds: [],
+    dataType: DataType.UNKNOWN,
+    value: "",
+    subgroupTag: emptyTag,
+    orderWithinSet: 0,
+    metadata: emptyVariableMetadata,
+    associatedEntityAbbreviatedName: "",
+    entityId: "",
+    entityVersionId: "",
+    content: {
+      bCreateDescription: false,
+      bCreateInterpretation: false,
+    },
+    templateVariableId: null,
+  });
 };
 
 // Defines the configuration to be used when displaying the variable as an input element.
@@ -127,7 +203,7 @@ export const getVariableInputConfig = (size?: string, mapTest?: Map<string, Vari
       type: { path: "dataType" },
       metadata: { path: "metadata" },
       props: { size, hoverCard: hoverCardProps },
-      tooltipContent: (item?: Variable) => item && item.content && useMemo(() => {
+      tooltipContent: (item?: Variable) => item && item.getContent() && useMemo(() => {
         return renderVariableTooltipContent(item, mapTest, descriptionEditor, interpretationEditor, bInVerticalTooltipContent);
       }, [item, mapTest, bInVerticalTooltipContent]),
     }
@@ -159,19 +235,19 @@ export const getVariableObjectConfig = (
     { id: "10", propertyPath: "metadata.associatedCompositeVariableIdToken.variableId", displayName: "Associated Composite Variable", type: "select",  metadata: { options: variablesComboboxData } },
     { id: "11", propertyPath: "metadata.associatedSubvariableIds", displayName: "Associated Subvariables", type: "multiSelect",  metadata: { options: variablesComboboxData } },
     { id: "12", propertyPath: "metadata.bNormallyDistributed", displayName: "Normally Distributed", type: "checkbox" },
-    { id: "13", propertyPath: "metadata.visibility", displayName: "Visibility", type: "select", metadata: { options: convertEnumToComboboxDataArray(Visibility) } },
+    { id: "13", propertyPath: "metadata.visibility", displayName: "Visibility", type: "select", metadata: { options: convertEnumToComboboxDataArray(EVisibility) } },
     { id: "14", propertyPath: "metadata.bOptional", displayName: "Optional", type: "checkbox" },
     { id: "15", propertyPath: "metadata.bCreatePercentileRank", displayName: "Create Percentile Rank", type: "checkbox" },
     { id: "16", propertyPath: "metadata.bAutoCalculatePercentileRank", displayName: "Auto Calculate Percentile Rank", type: "checkbox" },
-    { id: "17", propertyPath: "metadata.percentileRankVisibility", displayName: "Percentile Rank Visibility", type: "select", metadata: { options: convertEnumToComboboxDataArray(Visibility) } },
+    { id: "17", propertyPath: "metadata.percentileRankVisibility", displayName: "Percentile Rank Visibility", type: "select", metadata: { options: convertEnumToComboboxDataArray(EVisibility) } },
     { id: "18", propertyPath: "metadata.bCreateDescriptiveRating", displayName: "Create Descriptive Rating", type: "checkbox" },
     { id: "19", propertyPath: "metadata.bAutoCalculateDescriptiveRating", displayName: "Auto Calculate Descriptive Rating", type: "checkbox" },
-    { id: "20", propertyPath: "metadata.descriptiveRatingVisibility", displayName: "Descriptive Rating Visibility", type: "select", metadata: { options: convertEnumToComboboxDataArray(Visibility) } },
+    { id: "20", propertyPath: "metadata.descriptiveRatingVisibility", displayName: "Descriptive Rating Visibility", type: "select", metadata: { options: convertEnumToComboboxDataArray(EVisibility) } },
     { id: "21", propertyPath: "metadata.bIncludeInDynamicTable", displayName: "Include In Dynamic Table", type: "checkbox" },
     { id: "22", propertyPath: "content.bCreateDescription", displayName: "Create Description", type: "checkbox" },
-    { id: "23", propertyPath: "content.description.blocks", displayName: "Description", type: "richText", metadata: { editor: descriptionEditor, visibility: bInShowDescriptionBlock ? Visibility.VISIBLE : Visibility.HIDDEN } },
+    { id: "23", propertyPath: "content.description.blocks", displayName: "Description", type: "richText", metadata: { editor: descriptionEditor, visibility: bInShowDescriptionBlock ? EVisibility.VISIBLE : EVisibility.HIDDEN } },
     { id: "24", propertyPath: "content.bCreateInterpretation", displayName: "Create Interpretation", type: "checkbox" },
-    { id: "25", propertyPath: "content.interpretation.blocks", displayName: "Interpretation", type: "richText", metadata: { editor: interpretationEditor, visibility: bInShowInterpretationBlock ? Visibility.VISIBLE : Visibility.HIDDEN } },
+    { id: "25", propertyPath: "content.interpretation.blocks", displayName: "Interpretation", type: "richText", metadata: { editor: interpretationEditor, visibility: bInShowInterpretationBlock ? EVisibility.VISIBLE : EVisibility.HIDDEN } },
     { id: "26", propertyPath: "entityId", displayName: "Entity ID", type: "select",  metadata: { options: entitiesComboboxData } },
     { id: "27", propertyPath: "entityVersionId", displayName: "Entity Version ID", type: "select",  metadata: { options: entityVersionsComboboxData } },
   ]
@@ -188,10 +264,10 @@ export const variablePropertiesComboboxData: ComboboxData[] = [
 ];
 
 export function convertVariablesToComboboxData(variables: Variable[]): ComboboxData[] {
-  return variables.map(({ idToken, label }) => {
+  return variables.map((variable) => {
     return {
-      id: idToken.id,
-      label: label,
+      id: variable.getId(),
+      label: variable.getLabel(),
     };
   });
 }

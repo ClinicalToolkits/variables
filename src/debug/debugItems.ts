@@ -1,7 +1,7 @@
 import { DebugMenuItem } from "@clinicaltoolkits/universal-react-components";
 import { useVariableContext } from "../contexts";
 import { DataType, generateUUID } from "@clinicaltoolkits/type-definitions";
-import { Variable, VariableIdToken } from "../types";
+import { createVariable, Variable, VariableIdToken } from "../types";
 
 export const debugItems: DebugMenuItem[] = [
   {
@@ -16,7 +16,8 @@ export const debugItems: DebugMenuItem[] = [
     action: () => {
       const { addVariable } = useVariableContext();
       const id = generateUUID();
-      const testVariable: Variable = {
+      const testVariable: Variable = createVariable({
+        id,
         idToken: new VariableIdToken({ variableId: id }),
         fullName: "Test Variable",
         abbreviatedName: "Test Variable",
@@ -30,7 +31,7 @@ export const debugItems: DebugMenuItem[] = [
           label: "testLabels",
           childVariableIds: [],
         },
-      };
+      });
       addVariable(testVariable);
     },
   },

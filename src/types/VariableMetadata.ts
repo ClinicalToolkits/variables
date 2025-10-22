@@ -1,4 +1,4 @@
-import { Age, AgeRangeString, AssociatedSubobjectProperties, PathsToFields, Visibility } from "@clinicaltoolkits/type-definitions";
+import { Age, AgeRangeString, AssociatedSubobjectProperties, PathsToFields, EVisibility } from "@clinicaltoolkits/type-definitions";
 import { DescriptiveRating } from "../descriptive-ratings/types/DescriptiveRating";
 import { ContentBlock, getTextFromContentBlock, RowType } from "@clinicaltoolkits/content-blocks";
 import { Variable, VariableIdToken } from "./Variable";
@@ -26,17 +26,17 @@ export interface DBVariableMetadata {
   //interpretationBlock?: ContentBlock | null;
   descriptiveRatingId?: string;
   bNormallyDistributed?: boolean;
-  visibility?: Visibility;
+  visibility?: EVisibility;
   bCreatePercentileRank?: boolean;
   bAutoCalculatePercentileRank?: boolean;
-  percentileRankVisibility?: Visibility;
+  percentileRankVisibility?: EVisibility;
   bCreatePercentileRange?: boolean;
-  percentileRangeVisibility?: Visibility;
+  percentileRangeVisibility?: EVisibility;
   bCreateDescriptiveRating?: boolean;
   bAutoCalculateDescriptiveRating?: boolean;
-  descriptiveRatingVisibility?: Visibility;
+  descriptiveRatingVisibility?: EVisibility;
   bCreatePreviousScore?: boolean;
-  previousScoreVisibility?: Visibility;
+  previousScoreVisibility?: EVisibility;
   associatedCompositeVariableId?: string;
   associatedSubvariableIds?: string[];
   bOptional?: boolean;
@@ -57,13 +57,13 @@ export const emptyVariableMetadata: VariableMetadata = {
   description: "",
   descriptiveRatingId: "",
   bNormallyDistributed: true,
-  visibility: Visibility.VISIBLE,
+  visibility: EVisibility.VISIBLE,
   bCreatePercentileRank: false,
   bAutoCalculatePercentileRank: false,
-  percentileRankVisibility: Visibility.VISIBLE,
+  percentileRankVisibility: EVisibility.VISIBLE,
   bCreateDescriptiveRating: false,
   bAutoCalculateDescriptiveRating: false,
-  descriptiveRatingVisibility: Visibility.VISIBLE,
+  descriptiveRatingVisibility: EVisibility.VISIBLE,
   associatedCompositeVariableIdToken: undefined, //new VariableIdToken({ variableId: "", entityId: "", entityVersionId: "" }), // TODO: Calling this here causes a circular dependency. We should consider moving this to a utility function.
   associatedSubvariableIds: [],
   bOptional: false,
@@ -96,11 +96,11 @@ export interface VariableMetadata extends Omit<DBVariableMetadata, "associatedCo
 }
 
 export const getParentVariableId = (inVariable: Variable): string | undefined => {
-  return inVariable?.metadata?.properties?.childVariable?.parentVariableId;
+  return inVariable?.getMetadata()?.properties?.childVariable?.parentVariableId;
 }
 
 export const getChildVariableIds = (inVariable: Variable): string[] => {
-  return inVariable?.metadata?.childVariableIds || [];
+  return inVariable?.getMetadata()?.childVariableIds || [];
 };
 
 export type InterpretationData = {

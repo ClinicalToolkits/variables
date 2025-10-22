@@ -1,6 +1,6 @@
-import { Variable } from "../../types";
+import { VariableData } from "../../types";
 
-export const enrichSubvariableProperties = (variable: Variable, variables: Variable[]) => {
+export const enrichSubvariableProperties = (variable: VariableData, variables: VariableData[]) => {
   if (variable.metadata?.associatedSubvariableProperties) {
     console.log("variable: ", variable);
     // Map through each associatedSubvariable to update its properties

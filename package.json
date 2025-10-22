@@ -1,6 +1,6 @@
 {
   "name": "@clinicaltoolkits/variables",
-  "version": "1.0.421",
+  "version": "1.0.445",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -34,9 +34,6 @@
     "postcss-loader": "^7.3.4",
     "postcss-preset-mantine": "^1.12.3",
     "raw-loader": "^4.0.2",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.21.1",
     "style-loader": "^3.3.3",
     "ts-loader": "^9.5.1",
     "typescript": "^5.7.3",
@@ -46,14 +43,20 @@
     "webpack-dev-server": "^4.15.1",
     "worker-loader": "^3.0.8"
   },
-  "dependencies": {
-    "@clinicaltoolkits/type-definitions": "^1.0.407",
-    "@clinicaltoolkits/universal-react-components": "^1.0.1143",
-    "@clinicaltoolkits/utility-functions": "^1.0.108",
-    "@mantine/core": "^7.15.2",
-    "@mantine/hooks": "^7.15.2"
-  },
   "peerDependencies": {
-    "@clinicaltoolkits/content-blocks": "^1.0.487"
+    "@clinicaltoolkits/content-blocks": "^1.0.525",
+    "@clinicaltoolkits/ct-supabase": "^1.0.47",
+    "@clinicaltoolkits/type-definitions": "^1.0.452",
+    "@clinicaltoolkits/universal-react-components": "^1.1.47",
+    "@clinicaltoolkits/utility-functions": "^1.0.191",
+    "@mantine/carousel": "7.15.2",
+    "@mantine/core": "7.15.2",
+    "@mantine/dates": "7.15.2",
+    "@mantine/hooks": "7.15.2",
+    "@mantine/notifications": "7.15.2",
+    "@mantine/spotlight": "7.15.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.3.0"
   }
 }

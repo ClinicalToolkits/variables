@@ -1,5 +1,7 @@
+/*
 import { generateUUID } from "@clinicaltoolkits/type-definitions";
-import { getSupabaseClient, logger } from "@clinicaltoolkits/utility-functions";
+import { logger } from "@clinicaltoolkits/utility-functions";
+import { getSupabaseClient } from "@clinicaltoolkits/ct-supabase";
 import { convertVariableToDBVariable } from "./utility";
 import { Variable } from "../types";
 
@@ -12,8 +14,8 @@ export async function createVariable(variable: Variable) {
 
     const { data, error } = await supabaseClient
       .from('variables')
-      .insert(dbVariable)
-      .eq("id", variable.idToken.databaseId);
+      .insert(dbVariable as any) // TODO: Fix type issue
+      .eq("id", variable.getVariableId());
   
     if (error) {
       logger.error('Error creating variable:', error);
@@ -24,3 +26,4 @@ export async function createVariable(variable: Variable) {
     logger.error('Error creating variable:', error);
   }
 }
+*/

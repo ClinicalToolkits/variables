@@ -5,5 +5,5 @@ export const getClonedVariables = <T extends Variable>(variables: T[] | Map<stri
         variables = Array.from(variables.values());
     }
 
-    return variables.filter(v => v?.metadata?._internal?._origin === "cloned");;
+    return variables.filter(v => v?.getMetadata()?._internal?._origin === "cloned");;
 };

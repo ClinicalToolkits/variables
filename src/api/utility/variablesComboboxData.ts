@@ -1,7 +1,8 @@
 import { ComboboxData } from "@clinicaltoolkits/type-definitions";
-import { fetchVariables } from "../fetchVariable";
+import { fetchVariableBatch } from "../fetchVariable";
 import { convertVariablesToComboboxData } from "../../types";
-import { getSupabaseClient, logger } from "@clinicaltoolkits/utility-functions";
+import { logger } from "@clinicaltoolkits/utility-functions";
+import { getSupabaseClient } from "@clinicaltoolkits/ct-supabase";
 
 // TODO: The below is significantly more performant than the original implementation. However, it doesn't correctly calculate the `idTokens` for the variables. Need to fix this.
 export const fetchVariablesComboboxData = async (variableIds?: string[]): Promise<ComboboxData[]> => {
@@ -20,7 +21,7 @@ export const fetchVariablesComboboxData = async (variableIds?: string[]): Promis
     if (error) {
       throw new Error(`Supabase error: ${error.message}`);
     }
-    variableComboboxData = data;
+    variableComboboxData = data as any; // TODO: fix types - should not need 'as any'
   } catch (error) {
     logger.error('Error fetching variables:', error);
   }

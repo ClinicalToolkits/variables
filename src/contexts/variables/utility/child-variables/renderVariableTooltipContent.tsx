@@ -1,7 +1,7 @@
 import React from "react";
 import { Grid, Text } from "@mantine/core";
 import { convertAgeToAgeString, isHidden, isTypeAge } from "@clinicaltoolkits/type-definitions";
-import { getChildVariableIds, getVariableFullName, getVariableMetadata, getVariableValue, Variable } from "../../../../types";
+import { getChildVariableIds, Variable, VariableData, wrapVariables } from "../../../../types";
 import { getContentBlocksFromVariableDescription, getContentBlocksFromVariableInterpretation } from "../../../../utility/getVariableContent";
 import { ContentBlockEditor } from "@clinicaltoolkits/content-blocks";
 import { Editor } from "@tiptap/react";
@@ -16,7 +16,7 @@ export const renderVariableTooltipContent = (variable: Variable, data?: Map<stri
   const interpretationBlocks = data ? getContentBlocksFromVariableInterpretation(variable, data, true) : [];
 
   const childIds = getChildVariableIds(variable);
-  const childVariableContent = renderChildVariableValues(data, variable.fullName, childIds);
+  const childVariableContent = renderChildVariableValues(data, variable.getFullName(), childIds);
 
   const bRenderDescription = descriptionBlocks && descriptionBlocks.length > 0;
   const bRenderInterpretation = interpretationBlocks && interpretationBlocks.length > 0;
@@ -65,10 +65,9 @@ export const renderChildVariableValues = (data?: Map<string | number, Variable>,
       return acc;
     }
 
-    const childName = getVariableFullName(childVariable);
-    const childValue = getVariableValue(childVariable);
-    const childMetadata = getVariableMetadata(childVariable);
-    const bChildHidden = isHidden(childMetadata?.visibility);
+    const childName = childVariable.getFullName();
+    const childValue = childVariable.getValue();
+    const bChildHidden = childVariable.isHidden();
 
     if (!bChildHidden) {
       return acc;
@@ -86,7 +85,7 @@ export const renderChildVariableValues = (data?: Map<string | number, Variable>,
         </Grid.Col>
         <Grid.Col span={3}>
           <Text fz={"xs"}>
-            {displayValue}
+            {displayValue?.toString() /* //TODO: Monitor for errors after introducing .toString()... */}
           </Text>
         </Grid.Col>
       </React.Fragment>

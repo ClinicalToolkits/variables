@@ -5,8 +5,8 @@ import { getVariablesArray, sortVariables, useVariableContext } from '../../cont
 import { logger } from '@clinicaltoolkits/utility-functions';
 import { DataType, PathsToFields } from '@clinicaltoolkits/type-definitions';
 import { getOptionsMenuVariables } from '../../utility';
-import { Variable } from '../../types';
-import { createGenericContext, State } from '@clinicaltoolkits/universal-react-components/dist/contexts';
+import { Variable, VariableData } from '../../types';
+import { createGenericContext, State } from '@clinicaltoolkits/universal-react-components';
 import styles from "./styles.module.css";
 
 interface ActionCheckboxState extends State {
@@ -48,8 +48,8 @@ export const ActionCheckbox: React.FC<ActionCheckboxProps> = ({ id }) => {
   const variable = variableMap.get(id);
   if (!variable) return null;
 
-  const label = variable.metadata?.actionParams?.label || variable.fullName;
-  const bChecked = typeof variable.value === 'boolean' ? variable.value : false;
+  const label = variable.getMetadata()?.actionParams?.label || variable.getFullName();
+  const bChecked = typeof variable.getValue() === 'boolean' ? variable.getValue() as boolean : false; // TODO: Ideally wouldn't need cast
 
   const handleChange = () => {
     console.log("ActionCheckbox handleChange", id, bChecked);
@@ -81,7 +81,7 @@ export const ActionCheckboxes: React.FC<ActionCheckboxesProps> = ({ inIds, inOwn
   const actionCheckboxVariables = getOptionsMenuVariables({ variables, dataType: DataType.CHECKBOX });
   const sortedActionCheckboxVariables = sortVariables(actionCheckboxVariables);
   const actionCheckboxes: React.ReactNode[] = sortedActionCheckboxVariables.map((variable) => {
-    const id = variable.idToken.id;
+    const id = variable.getId();
     return (
       <ActionCheckbox
         key={id}
@@ -113,13 +113,14 @@ export const ActionCheckboxes: React.FC<ActionCheckboxesProps> = ({ inIds, inOwn
 interface SetValueFromOptionsMenuVariableProps {
   value: any;
   optionsMenuVariable: Variable;
-  batchSetVariableProperty: (ids: string[], propertyPath: PathsToFields<Variable>, value: any) => void;
+  batchSetVariableProperty: (ids: string[], propertyPath: PathsToFields<VariableData>, value: any) => void;
 }
 
 export const setValueFromOptionsMenuVariable = ({ value, optionsMenuVariable, batchSetVariableProperty }: SetValueFromOptionsMenuVariableProps): void => {
   console.log("setValueFromOptionsMenuVariable", value, optionsMenuVariable);
-  if (value !== undefined && optionsMenuVariable.metadata?.actionParams?.ids) {
-    const { ids, propertyPath, name } = optionsMenuVariable.metadata.actionParams;
+  const actionParams = optionsMenuVariable.getMetadata()?.actionParams;
+  if (value !== undefined && actionParams && actionParams?.ids) {
+    const { ids, propertyPath, name } = actionParams;
     switch (name) {
       case 'batchSetVariableProperty': {
         if (propertyPath === "metadata.visibility" && typeof value === "boolean") value = value ? 1 : 0;
@@ -138,7 +139,7 @@ interface SetValuesFromOptionsMenuVariablesProps extends Omit<SetValueFromOption
 
 export const setValuesFromOptionsMenuVariables = ({ optionsMenuVariables, batchSetVariableProperty }: SetValuesFromOptionsMenuVariablesProps): void => {
   optionsMenuVariables.forEach((optionsMenuVariable) => {
-    const value = optionsMenuVariable.value;
+    const value = optionsMenuVariable.getValue();
     setValueFromOptionsMenuVariable({ value, optionsMenuVariable, batchSetVariableProperty });
   });
 };

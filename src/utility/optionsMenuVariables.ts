@@ -8,7 +8,7 @@ interface OptionsMenuVariablesParams {
 
 export const getOptionsMenuVariables = ({ variables, dataType }: OptionsMenuVariablesParams): Variable[] => {
   return variables.filter((variable) => {
-    if (variable.metadata?.bOptionsMenu && (!dataType || variable.dataType === dataType)) return variable;
+    if (variable.getMetadata()?.bOptionsMenu && (!dataType || variable.getDataType() === dataType)) return variable;
   });
 };
 

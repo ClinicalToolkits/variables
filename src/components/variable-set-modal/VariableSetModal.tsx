@@ -1,41 +1,62 @@
 import React, { useEffect } from "react";
-import { ExtendedHoverCardProps, HeadingProps, InfoFieldModal, useIsExtraSmallScreen, useIsSmallScreen } from "@clinicaltoolkits/universal-react-components";
+import { ExtendedHoverCardProps, IHeadingProps, InfoFieldModal, InfoFieldModalProps, useIsExtraSmallScreen, useIsSmallScreen } from "@clinicaltoolkits/universal-react-components";
 import { MantineSize } from "@mantine/core";
 import { InfoFieldClassNames, PathsToFields, RecordType } from "@clinicaltoolkits/type-definitions";
 import { getOptionalVariableSubgroups, handleAutoVariableUpdates, useSortAndGroupVariables, useVariableContext } from "../../contexts";
-import { SetVariableFunction, Variable, VariableSet, getVariableInputConfig } from "../../types";
+import { SetVariableFunction, Variable, VariableData, VariableSet, getVariableInputConfig } from "../../types";
 import { VariableCheckboxGroup } from "./VariableCheckboxGroup";
 import { ActionCheckboxProvider, ActionCheckboxes } from "./ActionCheckbox";
 import { objectMapStore, /*useContentBlockWrapperOptions, useInfoFieldOptions,*/ useRichTextEditor } from "@clinicaltoolkits/content-blocks";
 import { logger } from "@clinicaltoolkits/utility-functions";
 import styles from "./styles.module.css";
 
-export interface VariableSetModalProps {
-  variableSet?: VariableSet | null;
-  headingChildren?: React.ReactNode[];
-  opened: boolean;
-  onClose: () => void;
-  headingProps?: Partial<Omit<HeadingProps, "children">>;
-  inputSize?: MantineSize;
-  classNames?: {
-    infoField?: InfoFieldClassNames;
-    modal?: {
-      root?: string;
-      body?: string;
-      content?: string;
-    }
-  };
-  onVariableValueUpdated: SetVariableFunction;
-  actionComponent?: React.ReactNode;
-}
+/* ------------------------------ Type Utilities ----------------------------- */
 
-export const getVariableIdPathTest = <Variable extends RecordType>(): PathsToFields<Variable> => {
-  return "idToken.id" as PathsToFields<Variable>;
-}
+/** Override utility: remove keys of R from T, then add R. */
+type Override<T, R> = Omit<T, keyof R> & R;
 
-export const getVariableILabelPathTest = <Variable extends RecordType>(): PathsToFields<Variable> => {
-  return "abbreviatedName" as PathsToFields<Variable>;
-}
+/* ------------------------------- Props (lean) ------------------------------- */
+
+/**
+ * Start with the modal we wrap, then:
+ * - Remove things that VariableSetModal computes internally (objectGroups, infoFieldConfig, onUpdate)
+ * - Loosen headingProps to Partial<...> and exclude its original to avoid conflict
+ * - Keep pass-through modal knobs you want (opened, onClose, id, size, fullScreen, classNames, actionComponent, subgroupOrder, gap)
+ * - Add VariableSetModal-specific props (variableSet, headingChildren, inputSize, onVariableValueUpdated)
+ */
+export type VariableSetModalProps = Override<
+  Omit<
+    InfoFieldModalProps<Variable>,
+    "objectGroups" | "infoFieldConfig" | "onUpdate" | "headingProps"
+  >,
+  {
+    /** Optional override for the heading (you assemble defaults internally). */
+    headingProps?: Partial<Omit<IHeadingProps, "children">>;
+
+    /** VariableSet being displayed; when null/undefined, show default label. */
+    variableSet?: VariableSet | null;
+
+    /** Extra items to append to the heading area (to the right/under title). */
+    headingChildren?: React.ReactNode[];
+
+    /** Input size fed into getVariableInputConfig. */
+    inputSize?: MantineSize;
+
+    /** Merge-friendly class names; reuse exact shape from InfoFieldModal. */
+    classNames?: InfoFieldModalProps<Variable>["classNames"];
+
+    /** Handler to push variable value updates back to caller. */
+    onVariableValueUpdated: SetVariableFunction;
+  }
+>;
+
+/* ----------------------------- Label/ID selectors --------------------------- */
+
+export const getVariableIdPathTest = (): PathsToFields<VariableData> =>
+  "idToken.id";
+
+export const getVariableLabelPathTest = (): PathsToFields<VariableData> =>
+  "abbreviatedName";
 
 export const variableDescriptionEditorId = "variableDescriptionEditor";
 export const variableInterpretationEditorId = "variableInterpretationEditor";
@@ -46,7 +67,18 @@ export const variableInterpretationEditorId = "variableInterpretationEditor";
  * Requires the VariableContextProvider to be a parent component and the variableMap and variableSetMap to be initialized.
  * @param titleChildren - Array of React nodes to display in the title section of the modal.
  */
-export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet, headingChildren = [], opened, onClose, headingProps, inputSize = "sm", classNames, onVariableValueUpdated, actionComponent }) => {
+export const VariableSetModal: React.FC<VariableSetModalProps> = ({
+  variableSet,
+  headingChildren = [],
+  opened,
+  onClose,
+  headingProps,
+  inputSize = "sm",
+  internalClassNames,
+  onVariableValueUpdated,
+  actionComponent,
+  objectGroupPaperPropsByIndex
+}) => {
   //const { updateGetObjectFunction, updateGetObjectDisplayNameFunction } = useInfoFieldOptions(); // TODO: Variables module should be self-contained, that means that the InfoFieldOptionsProvider needs to be placed inside the VariablesProvider (or we need to allow the user to optionally pass in the InfoFieldProvider to the VariablesProvider, in order to allow them more control over Provider placement and nesting)
   //const { updateGetObjectMapFunction, updateGetObjectIdPathFunction, updateGetObjectLabelPathFunction } = useContentBlockWrapperOptions(); // TODO: Ditto
   const bVerticalTooltipContent = useIsSmallScreen();
@@ -57,7 +89,7 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
 
   useEffect(() => {
     objectMapStore.setIdPath(getVariableIdPathTest());
-    objectMapStore.setLabelPath(getVariableILabelPathTest());
+    objectMapStore.setLabelPath(getVariableLabelPathTest());
     //updateGetObjectIdPathFunction(getVariableIdPathTest);
     //updateGetObjectLabelPathFunction(getVariableILabelPathTest);
   },[]);
@@ -78,7 +110,7 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
     updateGetObjectDisplayNameFunction(getObjectDisplayName);
     updateGetObjectMapFunction(() => variableMap);*/
     objectMapStore.replace(variableMap);
-    objectMapStore.setLabelPath(getVariableILabelPathTest());
+    objectMapStore.setLabelPath(getVariableLabelPathTest());
     objectMapStore.setIdPath(getVariableIdPathTest());
   }, [variableMap]);
 
@@ -90,7 +122,7 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
     handleAutoVariableUpdates(id, value, variableMap, onVariableValueUpdated);
   };
 
-  const defaultHeadingProps: HeadingProps = {
+  const defaultHeadingProps: IHeadingProps = {
     headingProps: { order: 4, ta: "left" },
     headingText: variableSet?.label ? variableSet.label : "Variable Set Viewer",
     bPaper: true,
@@ -108,7 +140,7 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
   // Merge the default classNames with the provided classNames
   const infoFieldClassNames = {
     ...defaultClassNames,
-    ...classNames?.infoField,
+    ...internalClassNames?.infoField,
   };
 
   // Added delay to hover card to prevent unpleasant/accidental hover card popups and to allow the editors to update their content
@@ -121,6 +153,7 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
       //maw: "325px"
     }
   }
+  const variableInputConfig = getVariableInputConfig(inputSize, variableMap, descriptionEditor, interpretationEditor, hoverCardProps, bVerticalTooltipContent);
 
   return (
     <ActionCheckboxProvider>
@@ -132,11 +165,15 @@ export const VariableSetModal: React.FC<VariableSetModalProps> = ({ variableSet,
         headingProps={{...defaultHeadingProps, ...headingProps}}
         subgroupOrder={5}
         objectGroups={variableGroups}
-        infoFieldConfig={getVariableInputConfig(inputSize, variableMap, descriptionEditor, interpretationEditor, hoverCardProps, bVerticalTooltipContent)}
+        infoFieldConfig={variableInputConfig}
         onUpdate={handleVariableUpdate}
         gap={0}
-        classNames={{ infoField: infoFieldClassNames, modal: classNames?.modal }}
+        internalClassNames={{
+          infoField: infoFieldClassNames,
+          modal: internalClassNames?.modal
+        }}
         actionComponent={actionComponent}
+        objectGroupPaperPropsByIndex={objectGroupPaperPropsByIndex}
       />
     </ActionCheckboxProvider>
   );

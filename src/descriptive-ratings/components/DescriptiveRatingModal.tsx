@@ -24,7 +24,7 @@ export const DescriptiveRatingModal: React.FC<DescriptiveRatingModalProps> = ({ 
   const [selectedDescriptiveRatingSet, setSelectedDescriptiveRatingSet] = useState<DescriptiveRatingSet>(mergeUndefined(descriptiveRatingSet, emptyDescriptiveRatingSet));
 
   useEffect(() => {
-    const newdescriptiveRatingSet = mergeUndefined(descriptiveRatingSet, emptyDescriptiveRatingSet);
+    const newdescriptiveRatingSet = mergeUndefined<DescriptiveRatingSet>(descriptiveRatingSet, emptyDescriptiveRatingSet);
     setSelectedDescriptiveRatingSet(newdescriptiveRatingSet);
   }, [descriptiveRatingSet, mode]);
 

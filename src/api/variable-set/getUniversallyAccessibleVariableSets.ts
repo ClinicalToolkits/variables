@@ -1,4 +1,4 @@
-import { getSupabaseClient } from "@clinicaltoolkits/utility-functions";
+import { getSupabaseClient } from "@clinicaltoolkits/ct-supabase";
 import { convertDBVariableSetArrayToVariableSetArray } from "./convertVariableSetDBToVariableSet";
 import { VariableSet } from "../../types";
 
@@ -16,6 +16,6 @@ export const getUniversallyAccessibleVariableSets = async (): Promise<VariableSe
     throw error;
   }
 
-  const finalData = convertDBVariableSetArrayToVariableSetArray(data);
+  const finalData = convertDBVariableSetArrayToVariableSetArray(data as any); // TODO: fix types - should not need 'as any'
   return finalData || [];
 };
