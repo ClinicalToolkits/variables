@@ -1,9 +1,9 @@
-export * from "./api";
+export * from "./database";
+export * as variableDatabase from "./database";
 export * from "./components";
-export * from "./contexts";
+export * as variableState from "./state";
 export * from "./types";
 export * from "./descriptive-ratings";
 export * from "./gender";
-export * from "./utility";
 export * from "./constants";
 export * from "./debug";

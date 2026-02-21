@@ -8,6 +8,6 @@ export enum USER_INFORMATION {
   USER_PROFESSIONAL_REGISTRATION_NUMBER = "ba8b6325-eb4d-487c-848a-b18641c943a4",
 }
 
-export const USER_INFORMATION_PREFIX = "3516071e-8e75-4905-9b41-7a5bf03c56be:389ebbab-d08f-4981-a5de-820a162c928a";
+export const USER_INFORMATION_PREFIX = "3516071e-8e75-4905-9b41-7a5bf03c56be:389ebbab-d08f-4981-a5de-820a162c928a"; // TODO: Deprecating prefixes in favour of atomic IDs
 
-export const getUserInformationId = (userInformationId: USER_INFORMATION) => `${USER_INFORMATION_PREFIX}:${userInformationId}`;
+export const getUserInformationId = (userInformationId: USER_INFORMATION) => `${userInformationId}`;

@@ -2,7 +2,7 @@ import { getSupabaseClient } from "@clinicaltoolkits/ct-supabase";
 import { TextOps } from "@clinicaltoolkits/utility-functions";
 import { DescriptiveRating, DescriptiveRatingSet } from "../types";
 
-export const fetchDescriptiveRatingSets = async (descriptiveRatingIds?: string[]): Promise<DescriptiveRatingSet[]> => {
+export const fetchDescriptiveRatingSets = async (descriptiveRatingIds?: readonly string[]): Promise<DescriptiveRatingSet[]> => {
   const supabaseClient = getSupabaseClient();
   let query = supabaseClient
     .from("descriptive_rating_sets")

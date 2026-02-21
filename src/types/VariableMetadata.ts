@@ -1,6 +1,6 @@
 import { Age, AgeRangeString, AssociatedSubobjectProperties, PathsToFields, EVisibility } from "@clinicaltoolkits/type-definitions";
 import { DescriptiveRating } from "../descriptive-ratings/types/DescriptiveRating";
-import { ContentBlock, getTextFromContentBlock, RowType } from "@clinicaltoolkits/content-blocks";
+import { ContentBlock, RowType } from "@clinicaltoolkits/content-blocks";
 import { Variable, VariableIdToken } from "./Variable";
 
 // TODO: A large swath of these properties are not being used. We should consider removing them.
@@ -53,25 +53,6 @@ export interface DBVariableMetadata {
   dropdownOptions?: string[];
 }
 
-export const emptyVariableMetadata: VariableMetadata = {
-  description: "",
-  descriptiveRatingId: "",
-  bNormallyDistributed: true,
-  visibility: EVisibility.VISIBLE,
-  bCreatePercentileRank: false,
-  bAutoCalculatePercentileRank: false,
-  percentileRankVisibility: EVisibility.VISIBLE,
-  bCreateDescriptiveRating: false,
-  bAutoCalculateDescriptiveRating: false,
-  descriptiveRatingVisibility: EVisibility.VISIBLE,
-  associatedCompositeVariableIdToken: undefined, //new VariableIdToken({ variableId: "", entityId: "", entityVersionId: "" }), // TODO: Calling this here causes a circular dependency. We should consider moving this to a utility function.
-  associatedSubvariableIds: [],
-  bOptional: false,
-  bIncludeInDynamicTable: false,
-  bIncludeInTableFooter: false,
-  tableRowType: RowType.DEFAULT,
-};
-
 /**
  * The metadata of a variable.
  * @param {string} label - The label of the variable.
@@ -94,6 +75,25 @@ export interface VariableMetadata extends Omit<DBVariableMetadata, "associatedCo
   _internal?: InternalVariableMetadata;
   //variableSetID?: string; // TODO: Determine if this would be better set up as a Map<string, string[]> on the VariableContext.
 }
+
+export const emptyVariableMetadata: VariableMetadata = {
+  description: "",
+  descriptiveRatingId: "",
+  bNormallyDistributed: true,
+  visibility: EVisibility.VISIBLE,
+  bCreatePercentileRank: false,
+  bAutoCalculatePercentileRank: false,
+  percentileRankVisibility: EVisibility.VISIBLE,
+  bCreateDescriptiveRating: false,
+  bAutoCalculateDescriptiveRating: false,
+  descriptiveRatingVisibility: EVisibility.VISIBLE,
+  associatedCompositeVariableIdToken: undefined, //new VariableIdToken({ variableId: "", entityId: "", entityVersionId: "" }), // TODO: Calling this here causes a circular dependency. We should consider moving this to a utility function.
+  associatedSubvariableIds: [],
+  bOptional: false,
+  bIncludeInDynamicTable: false,
+  bIncludeInTableFooter: false,
+  tableRowType: RowType.DEFAULT,
+};
 
 export const getParentVariableId = (inVariable: Variable): string | undefined => {
   return inVariable?.getMetadata()?.properties?.childVariable?.parentVariableId;

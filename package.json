@@ -1,6 +1,6 @@
 {
   "name": "@clinicaltoolkits/variables",
-  "version": "1.0.445",
+  "version": "1.0.479",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,6 +18,7 @@
   "author": "Clinical Toolkits",
   "license": "ISC",
   "devDependencies": {
+    "@clinicaltoolkits/logger": "^1.0.10",
     "@svgr/webpack": "^8.1.0",
     "@tabler/icons-react": "^3.3.0",
     "@types/react": "^18.2.46",
@@ -44,11 +45,12 @@
     "worker-loader": "^3.0.8"
   },
   "peerDependencies": {
-    "@clinicaltoolkits/content-blocks": "^1.0.525",
-    "@clinicaltoolkits/ct-supabase": "^1.0.47",
-    "@clinicaltoolkits/type-definitions": "^1.0.452",
-    "@clinicaltoolkits/universal-react-components": "^1.1.47",
-    "@clinicaltoolkits/utility-functions": "^1.0.191",
+    "@clinicaltoolkits/content-blocks": "^1.0.536",
+    "@clinicaltoolkits/ct-supabase": "^1.0.61",
+    "@clinicaltoolkits/logger": "^1.0.10",
+    "@clinicaltoolkits/type-definitions": "^1.0.456",
+    "@clinicaltoolkits/universal-react-components": "^1.1.58",
+    "@clinicaltoolkits/utility-functions": "^1.0.210",
     "@mantine/carousel": "7.15.2",
     "@mantine/core": "7.15.2",
     "@mantine/dates": "7.15.2",

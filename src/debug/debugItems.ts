@@ -1,20 +1,16 @@
 import { DebugMenuItem } from "@clinicaltoolkits/universal-react-components";
-import { useVariableContext } from "../contexts";
 import { DataType, generateUUID } from "@clinicaltoolkits/type-definitions";
 import { createVariable, Variable, VariableIdToken } from "../types";
+import { variableCatalogStore } from "../state/VariableCatalogStore";
 
 export const debugItems: DebugMenuItem[] = [
   {
     label: "Print All Variables",
-    action: () => {
-      const { variableMap } = useVariableContext();
-      console.log(variableMap);
-    },
+    action: () => console.log(variableCatalogStore.snapshot.variableMap),
   },
   {
     label: "Add Debug Variable",
     action: () => {
-      const { addVariable } = useVariableContext();
       const id = generateUUID();
       const testVariable: Variable = createVariable({
         id,
@@ -32,14 +28,11 @@ export const debugItems: DebugMenuItem[] = [
           childVariableIds: [],
         },
       });
-      addVariable(testVariable);
+      variableCatalogStore.addVariables([testVariable]);
     },
   },
   {
-    label: "Print Variable Set Map",
-    action: () => {
-      const { variableSetMap } = useVariableContext();
-      console.log(variableSetMap);
-    },
+    label: "Print Variable Group Map",
+    action: () => console.log(variableCatalogStore.snapshot.variableGroupMap),
   }
 ];

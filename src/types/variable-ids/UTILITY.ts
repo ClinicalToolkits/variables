@@ -3,6 +3,6 @@ export enum UTILITY {
   checkbox_with_action = "90ad2335-003f-4cfa-a8db-15ddbb0372ab",
 }
 
-export const UTILITY_PREFIX = "bc3d85f0-5044-4ee8-9470-df5520c2574c:undefined";
+export const UTILITY_PREFIX = "bc3d85f0-5044-4ee8-9470-df5520c2574c:undefined"; // TODO: Deprecating prefixes in favour of atomic IDs
 
-export const getUtilityId = (utilityId: UTILITY) => `${UTILITY_PREFIX}:${utilityId}`;
+export const getUtilityId = (utilityId: UTILITY) => `${utilityId}`;

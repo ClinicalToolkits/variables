@@ -1,5 +1,5 @@
-import { cloneTemplateBlock } from "@clinicaltoolkits/content-blocks";
-import { getChildVariableIds, getParentVariableId, getVariableIdFromString, Variable, VariableData, wrapVariables } from "..";
+import { cloneTemplateBlock, RemapPlaceholdersMode } from "@clinicaltoolkits/content-blocks";
+import { getChildVariableIds, getParentVariableId, getVariableIdFromString, Variable, VariableData, createVariable } from "..";
 import { setInternalMetadata } from "./internalMetadata";
 import { generateUUID } from "@clinicaltoolkits/type-definitions";
 import { logger } from "@clinicaltoolkits/utility-functions";
@@ -10,6 +10,7 @@ interface CloneVariableOptions {
     entityId: string;
     entityInstanceId: string;
     variableIdMap?: Record<string, string>;
+    remapMode?: RemapPlaceholdersMode;
   }
   
   export const cloneVariable = ({
@@ -18,6 +19,7 @@ interface CloneVariableOptions {
     entityId,
     entityInstanceId,
     variableIdMap = {},
+    remapMode
   }: CloneVariableOptions): Variable => {
     const newIdToken = variableToClone.getIdToken().cloneWithChanges({
       variableId: newVariableId,
@@ -30,8 +32,16 @@ interface CloneVariableOptions {
       idToken: newIdToken,
       entityId,
       entityVersionId: entityInstanceId,
+      //...newIdToken, // In case you want to flatten it // TODO: Unneccesary to spread and seems to cause TS errors around the publicly accessible get id() method.
+      /**
+       * For my own curiosity, GPT claims:
+       * Why no error for entityId / entityVersionId?
+       * On the class, those are optional (?). When you spread newIdToken, TypeScript can’t prove those keys definitely exist, so it won’t emit the “always overwrites” diagnostic.
+       * For id, the class exposes a definite accessor (get id()), so the spread’s type definitely includes id. TS therefore warns that your earlier id: would be overwritten by a later spread (even though at runtime that accessor isn’t spread).
+       */
+      id: newVariableId,
       // Important: set the id to the new one
-      ...newIdToken, // In case you want to flatten it
+
     };
   
     // Clone content blocks if present
@@ -45,6 +55,7 @@ interface CloneVariableOptions {
               variableIdMap,
               entityId,
               entityInstanceId,
+              remapMode,
             })
           : undefined,
         interpretation: contentToClone?.interpretation
@@ -53,6 +64,7 @@ interface CloneVariableOptions {
               variableIdMap,
               entityId,
               entityInstanceId,
+              remapMode,
             })
           : undefined,
       };
@@ -73,7 +85,7 @@ interface CloneVariableOptions {
         _origin: "cloned",
       });
   
-    return wrapVariables(clonedVariableData);
+    return createVariable(clonedVariableData);
   };
   
 interface IBatchCloneVariableOptions extends Omit<CloneVariableOptions, "variableToClone" | "newVariableId" | "variableIdMap"> {
@@ -83,7 +95,7 @@ interface IBatchCloneVariableResult {
   clonedVariables: Variable[];
   variableIdMap: Record<string, string>;
 }
-export const batchCloneVariable = ({ variablesToClone, entityId, entityInstanceId }: IBatchCloneVariableOptions): IBatchCloneVariableResult => {
+export const batchCloneVariable = ({ variablesToClone, entityId, entityInstanceId, remapMode }: IBatchCloneVariableOptions): IBatchCloneVariableResult => {
   const variableIdMap: Record<string, string> = {};
 
    // 1. Work on a copy so we don’t reorder the caller’s array
@@ -129,6 +141,7 @@ export const batchCloneVariable = ({ variablesToClone, entityId, entityInstanceI
       entityId: entityId,
       entityInstanceId,
       variableIdMap,
+      remapMode
     });
 
     return clonedVariable;

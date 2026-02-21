@@ -1,30 +1,33 @@
 import React, { useEffect } from "react";
 import { GenericTable, TableColumn } from "@clinicaltoolkits/universal-react-components";
-import { VariableSet } from "../types";
-import { useVariableContext } from "../contexts";
-import { filterVariablesForTable, generateTableData, getContentBlocksFromVariableInterpretation, getVariableValueAsString } from "../utility";
+import { filterVariablesForTable, filterVariablesForTableInternal, generateTableData, getContentBlocksFromVariableInterpretation, getVariableValueAsString } from "../types/functions/utility";
 import { Stack, Text } from "@mantine/core";
+import { Variable, VariableMap } from "../types";
 
 interface VariableResultsTableProps {
-  selectedVariableSet: VariableSet | null;
+  inVariables: Variable[] | null;
+  inVariableMap: VariableMap;
 }
 
-export const VariableResultsTable: React.FC<VariableResultsTableProps> = ({ selectedVariableSet }) => {
-  const { getRelatedVariablesBySet, variableMap } = useVariableContext();
+export const VariableResultsTable: React.FC<VariableResultsTableProps> = ({ inVariables, inVariableMap }) => {
   const [testColumns, setTestColumns] = React.useState<TableColumn<any>[]>([]);
   const [testTableData, setTestTableData] = React.useState<string[][]>([]);
   const [footerData, setFooterData] = React.useState<React.ReactNode>(null);
 
+  const bVariablesPresent = inVariables && inVariables.length > 0;
+
   useEffect(() => {
-    if (selectedVariableSet) {
-      const selectedVariables = getRelatedVariablesBySet(selectedVariableSet);
-      const { tableDataVariables, tableFooterVariables, tableMetadata } = filterVariablesForTable(selectedVariables);
+    if (bVariablesPresent) {
+      const selectedVariables = inVariables;
+      console.log("VariableResultsTable::useEffect() - Generating Variable Results Table for variables: ", selectedVariables);
+      const { tableDataVariables, tableFooterVariables, tableMetadata } = filterVariablesForTableInternal(selectedVariables);
+      console.log("VariableResultsTable::useEffect() - Filtered table data variables: ", tableDataVariables);
       const { tableData: unmodifiedTableData, formattingMaps } = generateTableData({ variables: tableDataVariables, bUnifiedTable: true, tableMetadata});
       const columns = createColumnsFromStringArray(
         unmodifiedTableData[0],
         (value: string) => {
           const variableId = value.split(".")?.[0];
-          const variable = variableMap.get(variableId);
+          const variable = inVariableMap.get(variableId);
           let variableValue = variable?.getValue() ? getVariableValueAsString(variable.getValue(), variable.getDataType()) : value;
           return variableValue;
         }
@@ -39,7 +42,7 @@ export const VariableResultsTable: React.FC<VariableResultsTableProps> = ({ sele
         return tableFooterVariables ? (
           <Stack>
             {tableFooterVariables.map((variable) => {
-              const recentVariable = variableMap.get(variable.getId());
+              const recentVariable = inVariableMap.get(variable.getId());
               const variableValue = recentVariable?.getValue()
               const dataType = recentVariable?.getDataType();
               if (variableValue && dataType) {
@@ -57,11 +60,11 @@ export const VariableResultsTable: React.FC<VariableResultsTableProps> = ({ sele
       setFooterData(footerDisplayComponent);
 
       tableDataVariables.forEach((variable) => {
-        const interpretationBlocks = getContentBlocksFromVariableInterpretation(variable, variableMap, false);
+        const interpretationBlocks = getContentBlocksFromVariableInterpretation(variable, inVariableMap, false);
         interpretationBlocks?.forEach(block => console.log("content interpretation block: ", block));
       })
     }
-  }, [variableMap]);
+  }, [inVariableMap]);
 
   const variableTableProps = {
     data: testTableData,
@@ -70,7 +73,7 @@ export const VariableResultsTable: React.FC<VariableResultsTableProps> = ({ sele
     footer: footerData
   };
 
-  return selectedVariableSet ? <GenericTable {...variableTableProps} /> : null;
+  return bVariablesPresent ? <GenericTable {...variableTableProps} /> : null;
 };
 
 export function createColumnsFromStringArray(columnNames: string[], render?: (value: string) => string): TableColumn<any>[] {

@@ -1,4 +1,16 @@
 export * from "./internalMetadata";
 export * from "./cloneVariable";
 export * from "./getClonedVariables";
+export { getOptionsMenuVariables } from "./getOptionsMenuVariables";
+export { getRequiredVariables, getOptionalVariables, getSubgroupNameForVariable, getVariableSubgroupsToDisplay, buildVariableGroups } from "./getVariableSubgroups";
+export { getChildVariables } from "./getChildVariables";
 //export * from "./properties";
+export { sortVariables } from "./sortVariables";
+export { updateChildVariables } from "./updateChildVariables";
+export * from "./associated-variables";
+export * from "./automated-updates";
+export * from "./getVariablesArray";
+export * from "./child-variables";
+export * from "./utility";
+export { getClientAge } from "./getClientAge";
+export { cloneVariableControlBatch } from "./cloneVariableControls";

@@ -3,9 +3,9 @@ import { InfoFieldObjectProperties, SingleSelectDropdown } from '@clinicaltoolki
 import { Button, Modal, Stack } from '@mantine/core';
 import { ComboboxData, convertObjectArrayToComboboxDataArray, entityRecords, generateUUID, ObjectInfoConfig, PathsToFields, setValueByPath, tags } from '@clinicaltoolkits/type-definitions';
 import { mergeUndefined, logger } from '@clinicaltoolkits/utility-functions';
-import { updateVariable, fetchVariablesComboboxData, fetchVariable, upsertVariable } from '../api';
-import { Variable, VariableData, createEmptyVariable, getVariableObjectConfig, isVariable, wrapVariables } from '../types';
-import { convertVariableContentToBlock, upsertVariableContent } from '../utility/getVariableContent'; // TODO: Circular dependency
+import { updateVariable, fetchVariablesComboboxData, fetchVariable, upsertVariable } from '../database';
+import { Variable, VariableData, createEmptyVariable, getVariableObjectConfig, isVariable, createVariable } from '../types';
+import { convertVariableContentToBlock, upsertVariableContent } from '../types/functions/utility/getVariableContent'; // TODO: Circular dependency
 import { useRichTextEditor } from '@clinicaltoolkits/content-blocks';
 import { fetchDescriptiveRatingsComboboxData } from '../descriptive-ratings';
 import { getSupabaseClient } from '@clinicaltoolkits/ct-supabase';
@@ -51,7 +51,7 @@ interface SectionModalProps {
 }
 
 export const VariableModal: React.FC<SectionModalProps> = ({ bOpened, onClose, variable, onSave }) => {
-  const [variableDraft, setVariableDraft] = useState<Variable>(wrapVariables(variable ? mergeUndefined<VariableData>(variable.toJSON(), createEmptyVariable().toJSON()) : createEmptyVariable().toJSON()));
+  const [variableDraft, setVariableDraft] = useState<Variable>(createVariable(variable ? mergeUndefined<VariableData>(variable.toJSON(), createEmptyVariable().toJSON()) : createEmptyVariable().toJSON()));
   const [variablesComboboxData, setVariablesComboboxData] = useState<ComboboxData[]>([]);
   const [bShowDescriptionBlock, setShowDescriptionBlock] = useState(variableDraft.getContent()?.bCreateDescription);
   const [bShowInterpretationBlock, setShowInterpretationBlock] = useState(variableDraft.getContent()?.bCreateInterpretation);
@@ -95,7 +95,7 @@ export const VariableModal: React.FC<SectionModalProps> = ({ bOpened, onClose, v
   useEffect(() => {
     const newVariableData = variable ? mergeUndefined<VariableData>(variable.toJSON(), createEmptyVariable().toJSON()) : createEmptyVariable().toJSON()
     if (!newVariableData.idToken.variableId) newVariableData.idToken.variableId = generateUUID();
-    const newVariable = wrapVariables(newVariableData);
+    const newVariable = createVariable(newVariableData);
     setVariableDraft(newVariable);
     console.log("newVariable: ", newVariable);
   }, [variable]);
@@ -109,7 +109,7 @@ export const VariableModal: React.FC<SectionModalProps> = ({ bOpened, onClose, v
     //else if(path === 'content.bCreateInterpretation') setShowInterpretationBlock(value); // Handled in useEffect
     setValueByPath(updatedVariableData, path, value);
 
-    const updatedVariable = wrapVariables(updatedVariableData);
+    const updatedVariable = createVariable(updatedVariableData);
     setVariableDraft(updatedVariable);
     console.log("updatedVariable: ", updatedVariable);
   };

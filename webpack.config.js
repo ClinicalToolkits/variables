@@ -64,11 +64,16 @@ module.exports = (env, options) => {
           test: /\.md$/,
           use: 'raw-loader',
         },
+        {
+          test: /\.m?js$/,
+          resolve: { fullySpecified: false }
+        }
       ],
     },
     resolve: {
       alias: { /* TODO: Setup aliases - currently removed in favour of local paths and index use*/ },
-      extensions: ['.tsx', '.ts', '.js'],
+      extensions: [".ts", ".tsx", ".mjs", ".js", ".cjs"],
+      conditionNames: ["import", "module", "browser", "default"],
       fallback: {
         "path": require.resolve("path-browserify"),
         "os": require.resolve("os-browserify/browser"),
